@@ -1,0 +1,757 @@
+{
+    "counters": {
+        "u_column": 7,
+        "u_row": 7,
+        "u_content_image": 1,
+        "u_content_heading": 1,
+        "u_content_text": 7,
+        "u_content_html": 2,
+        "u_content_button": 1,
+        "u_content_social": 1
+    },
+    "body": {
+        "id": "xhfqZWCRSm",
+        "rows": [
+            {
+                "id": "SJoEcRtCVD",
+                "cells": [
+                    1
+                ],
+                "columns": [
+                    {
+                        "id": "4L-3SplIc5",
+                        "contents": [
+                            {
+                                "id": "49gURgy2hK",
+                                "type": "image",
+                                "values": {
+                                    "containerPadding": "17px",
+                                    "anchor": "",
+                                    "src": {
+                                        "url": "https://orderzup.s3.ap-south-1.amazonaws.com/logos/OrderzUp-WideLogo-White-Transparent.png",
+                                        "width": 1411,
+                                        "height": 299,
+                                        "autoWidth": false,
+                                        "maxWidth": "60%"
+                                    },
+                                    "textAlign": "center",
+                                    "altText": "",
+                                    "action": {
+                                        "name": "web",
+                                        "values": {
+                                            "href": "",
+                                            "target": "_blank"
+                                        }
+                                    },
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "_meta": {
+                                        "htmlID": "u_content_image_1",
+                                        "htmlClassNames": "u_content_image"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false,
+                                    "pending": false
+                                }
+                            }
+                        ],
+                        "values": {
+                            "backgroundColor": "",
+                            "padding": "0px",
+                            "borderRadius": "0px",
+                            "_meta": {
+                                "htmlID": "u_column_1",
+                                "htmlClassNames": "u_column"
+                            },
+                            "deletable": true,
+                            "locked": false
+                        }
+                    }
+                ],
+                "values": {
+                    "displayCondition": null,
+                    "columns": false,
+                    "_styleGuide": null,
+                    "backgroundColor": "#000434",
+                    "columnsBackgroundColor": "",
+                    "backgroundImage": {
+                        "url": "",
+                        "fullWidth": true,
+                        "repeat": "no-repeat",
+                        "size": "custom",
+                        "position": "center",
+                        "customPosition": [
+                            "50%",
+                            "50%"
+                        ]
+                    },
+                    "padding": "0px",
+                    "anchor": "",
+                    "hideDesktop": false,
+                    "_meta": {
+                        "htmlID": "u_row_1",
+                        "htmlClassNames": "u_row"
+                    },
+                    "selectable": true,
+                    "draggable": true,
+                    "duplicatable": true,
+                    "deletable": true,
+                    "hideable": true,
+                    "locked": false
+                }
+            },
+            {
+                "id": "THIE_VEA6b",
+                "cells": [
+                    1
+                ],
+                "columns": [
+                    {
+                        "id": "t6Ra2HAlke",
+                        "contents": [
+                            {
+                                "id": "YsPh1iNaz6",
+                                "type": "heading",
+                                "values": {
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "headingType": "h1",
+                                    "fontWeight": 400,
+                                    "fontSize": "22px",
+                                    "color": "#000434",
+                                    "textAlign": "center",
+                                    "lineHeight": "140%",
+                                    "linkStyle": {
+                                        "inherit": true,
+                                        "linkColor": "#0000ee",
+                                        "linkHoverColor": "#0000ee",
+                                        "linkUnderline": true,
+                                        "linkHoverUnderline": true
+                                    },
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "_meta": {
+                                        "htmlID": "u_content_heading_1",
+                                        "htmlClassNames": "u_content_heading"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false,
+                                    "text": "Your OrderzUp Account is Ready! 🚀"
+                                }
+                            }
+                        ],
+                        "values": {
+                            "backgroundColor": "",
+                            "padding": "0px",
+                            "borderRadius": "0px",
+                            "_meta": {
+                                "htmlID": "u_column_2",
+                                "htmlClassNames": "u_column"
+                            },
+                            "deletable": true,
+                            "locked": false
+                        }
+                    }
+                ],
+                "values": {
+                    "displayCondition": null,
+                    "columns": false,
+                    "_styleGuide": null,
+                    "backgroundColor": "",
+                    "columnsBackgroundColor": "",
+                    "backgroundImage": {
+                        "url": "",
+                        "fullWidth": true,
+                        "repeat": "no-repeat",
+                        "size": "custom",
+                        "position": "center"
+                    },
+                    "padding": "0px",
+                    "anchor": "",
+                    "hideDesktop": false,
+                    "_meta": {
+                        "htmlID": "u_row_2",
+                        "htmlClassNames": "u_row"
+                    },
+                    "selectable": true,
+                    "draggable": true,
+                    "duplicatable": true,
+                    "deletable": true,
+                    "hideable": true,
+                    "locked": false
+                }
+            },
+            {
+                "id": "AijseYmAC9",
+                "cells": [
+                    1
+                ],
+                "columns": [
+                    {
+                        "id": "VtomoT39tY",
+                        "contents": [
+                            {
+                                "id": "ObBE2pBykB",
+                                "type": "text",
+                                "values": {
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "fontSize": "14px",
+                                    "textAlign": "left",
+                                    "lineHeight": "140%",
+                                    "linkStyle": {
+                                        "inherit": true,
+                                        "linkColor": "#0000ee",
+                                        "linkHoverColor": "#0000ee",
+                                        "linkUnderline": true,
+                                        "linkHoverUnderline": true
+                                    },
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "_meta": {
+                                        "htmlID": "u_content_text_1",
+                                        "htmlClassNames": "u_content_text"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false,
+                                    "text": "<p style=\"line-height: 140%;\">Hi {{first_name}},</p>"
+                                }
+                            },
+                            {
+                                "id": "v7-WIlxq3O",
+                                "type": "text",
+                                "values": {
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "fontSize": "14px",
+                                    "textAlign": "left",
+                                    "lineHeight": "140%",
+                                    "linkStyle": {
+                                        "inherit": true,
+                                        "linkColor": "#0000ee",
+                                        "linkHoverColor": "#0000ee",
+                                        "linkUnderline": true,
+                                        "linkHoverUnderline": true
+                                    },
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "_meta": {
+                                        "htmlID": "u_content_text_2",
+                                        "htmlClassNames": "u_content_text"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false,
+                                    "text": "<p style=\"line-height: 140%;\">Your account is ready and it&rsquo;s time to take the next step! 🌟</p>"
+                                }
+                            },
+                            {
+                                "id": "EIJX6iMmrU",
+                                "type": "text",
+                                "values": {
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "fontSize": "14px",
+                                    "textAlign": "left",
+                                    "lineHeight": "140%",
+                                    "linkStyle": {
+                                        "inherit": true,
+                                        "linkColor": "#0000ee",
+                                        "linkHoverColor": "#0000ee",
+                                        "linkUnderline": true,
+                                        "linkHoverUnderline": true
+                                    },
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "_meta": {
+                                        "htmlID": "u_content_text_3",
+                                        "htmlClassNames": "u_content_text"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false,
+                                    "text": "<p style=\"line-height: 140%;\">Create your first Pool to start <strong>collaborating</strong> with your <strong>business partners</strong>! 🌟</p>"
+                                }
+                            },
+                            {
+                                "id": "Tm5Ha8Y89b",
+                                "type": "text",
+                                "values": {
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "fontSize": "14px",
+                                    "textAlign": "left",
+                                    "lineHeight": "140%",
+                                    "linkStyle": {
+                                        "inherit": true,
+                                        "linkColor": "#0000ee",
+                                        "linkHoverColor": "#0000ee",
+                                        "linkUnderline": true,
+                                        "linkHoverUnderline": true
+                                    },
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "_meta": {
+                                        "htmlID": "u_content_text_4",
+                                        "htmlClassNames": "u_content_text"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false,
+                                    "text": "<p style=\"line-height: 140%;\">By creating your first Pool, you can start collaborating with your business partners and streamline order management seamlessly. Pools help you:</p>"
+                                }
+                            },
+                            {
+                                "id": "iSxyW_FueZ",
+                                "type": "html",
+                                "values": {
+                                    "html": "<li>Connect and coordinate with your partners</li>\n<li>Manage shared inventory and orders efficiently</li>\n<li>Track performance and reduce operational bottlenecks</li>",
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "_meta": {
+                                        "htmlID": "u_content_html_1",
+                                        "htmlClassNames": "u_content_html"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false
+                                }
+                            }
+                        ],
+                        "values": {
+                            "backgroundColor": "",
+                            "padding": "0px",
+                            "borderRadius": "0px",
+                            "_meta": {
+                                "htmlID": "u_column_3",
+                                "htmlClassNames": "u_column"
+                            },
+                            "deletable": true,
+                            "locked": false
+                        }
+                    }
+                ],
+                "values": {
+                    "displayCondition": null,
+                    "columns": false,
+                    "_styleGuide": null,
+                    "backgroundColor": "",
+                    "columnsBackgroundColor": "",
+                    "backgroundImage": {
+                        "url": "",
+                        "fullWidth": true,
+                        "repeat": "no-repeat",
+                        "size": "custom",
+                        "position": "center"
+                    },
+                    "padding": "0px",
+                    "anchor": "",
+                    "hideDesktop": false,
+                    "_meta": {
+                        "htmlID": "u_row_3",
+                        "htmlClassNames": "u_row"
+                    },
+                    "selectable": true,
+                    "draggable": true,
+                    "duplicatable": true,
+                    "deletable": true,
+                    "hideable": true,
+                    "locked": false
+                }
+            },
+            {
+                "id": "ezzHGLz5lq",
+                "cells": [
+                    1
+                ],
+                "columns": [
+                    {
+                        "id": "U0tRznDJ8N",
+                        "contents": [
+                            {
+                                "id": "DJ26mQ7e1R",
+                                "type": "button",
+                                "values": {
+                                    "href": {
+                                        "name": "web",
+                                        "attrs": {
+                                            "href": "{{href}}",
+                                            "target": "{{target}}"
+                                        },
+                                        "values": {
+                                            "href": "https://enablement.orderzup.com/user/pools",
+                                            "target": "_blank"
+                                        }
+                                    },
+                                    "buttonColors": {
+                                        "color": "#ffffff",
+                                        "backgroundColor": "#f5891e",
+                                        "hoverColor": "#FFFFFF",
+                                        "hoverBackgroundColor": "#3AAEE0"
+                                    },
+                                    "size": {
+                                        "autoWidth": true,
+                                        "width": "100%"
+                                    },
+                                    "fontSize": "14px",
+                                    "lineHeight": "120%",
+                                    "textAlign": "center",
+                                    "padding": "10px 20px",
+                                    "borderRadius": "4px",
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "_meta": {
+                                        "htmlID": "u_content_button_1",
+                                        "htmlClassNames": "u_content_button"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false,
+                                    "text": "📥 Create Your First Pool Now",
+                                    "calculatedWidth": 227,
+                                    "calculatedHeight": 37
+                                }
+                            }
+                        ],
+                        "values": {
+                            "backgroundColor": "",
+                            "padding": "0px",
+                            "borderRadius": "0px",
+                            "_meta": {
+                                "htmlID": "u_column_4",
+                                "htmlClassNames": "u_column"
+                            },
+                            "deletable": true,
+                            "locked": false
+                        }
+                    }
+                ],
+                "values": {
+                    "displayCondition": null,
+                    "columns": false,
+                    "_styleGuide": null,
+                    "backgroundColor": "",
+                    "columnsBackgroundColor": "",
+                    "backgroundImage": {
+                        "url": "",
+                        "fullWidth": true,
+                        "repeat": "no-repeat",
+                        "size": "custom",
+                        "position": "center"
+                    },
+                    "padding": "0px",
+                    "anchor": "",
+                    "hideDesktop": false,
+                    "_meta": {
+                        "htmlID": "u_row_4",
+                        "htmlClassNames": "u_row"
+                    },
+                    "selectable": true,
+                    "draggable": true,
+                    "duplicatable": true,
+                    "deletable": true,
+                    "hideable": true,
+                    "locked": false
+                }
+            },
+            {
+                "id": "2eW-m4Egkt",
+                "cells": [
+                    1
+                ],
+                "columns": [
+                    {
+                        "id": "xV2AAtZK1N",
+                        "contents": [
+                            {
+                                "id": "IL5aj39W4B",
+                                "type": "html",
+                                "values": {
+                                    "html": "<center>Have questions or want a live walkthrough?\n<br>\n<a href=\"https://oup.my\" style=\"color:#F5891E\">\nBook your free 1-on-1 demo now →\n</a>\n  </center>\n",
+                                    "hideDesktop": false,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "_meta": {
+                                        "htmlID": "u_content_html_2",
+                                        "htmlClassNames": "u_content_html"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false
+                                }
+                            }
+                        ],
+                        "values": {
+                            "backgroundColor": "",
+                            "padding": "0px",
+                            "borderRadius": "0px",
+                            "_meta": {
+                                "htmlID": "u_column_5",
+                                "htmlClassNames": "u_column"
+                            },
+                            "deletable": true,
+                            "locked": false
+                        }
+                    }
+                ],
+                "values": {
+                    "displayCondition": null,
+                    "columns": false,
+                    "_styleGuide": null,
+                    "backgroundColor": "",
+                    "columnsBackgroundColor": "",
+                    "backgroundImage": {
+                        "url": "",
+                        "fullWidth": true,
+                        "repeat": "no-repeat",
+                        "size": "custom",
+                        "position": "center"
+                    },
+                    "padding": "0px",
+                    "anchor": "",
+                    "hideDesktop": false,
+                    "_meta": {
+                        "htmlID": "u_row_5",
+                        "htmlClassNames": "u_row"
+                    },
+                    "selectable": true,
+                    "draggable": true,
+                    "duplicatable": true,
+                    "deletable": true,
+                    "hideable": true,
+                    "locked": false
+                }
+            },
+            {
+                "id": "R_63eDKvdX",
+                "cells": [
+                    1
+                ],
+                "columns": [
+                    {
+                        "id": "2QQUQqHAnk",
+                        "contents": [
+                            {
+                                "id": "E-eYy67c3Q",
+                                "type": "text",
+                                "values": {
+                                    "containerPadding": "10px",
+                                    "anchor": "",
+                                    "fontSize": "14px",
+                                    "color": "#ffffff",
+                                    "textAlign": "left",
+                                    "lineHeight": "140%",
+                                    "linkStyle": {
+                                        "inherit": true,
+                                        "linkColor": "#0000ee",
+                                        "linkHoverColor": "#0000ee",
+                                        "linkUnderline": true,
+                                        "linkHoverUnderline": true
+                                    },
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "_meta": {
+                                        "htmlID": "u_content_text_7",
+                                        "htmlClassNames": "u_content_text"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false,
+                                    "text": "<p style=\"line-height: 140%;\">Thanks,<br>The OrderzUp Team</p>"
+                                }
+                            },
+                            {
+                                "id": "tSzmKDS4TV",
+                                "type": "social",
+                                "values": {
+                                    "containerPadding": "4px 4px 10px",
+                                    "anchor": "",
+                                    "icons": {
+                                        "iconType": "circle-white",
+                                        "icons": [
+                                            {
+                                                "name": "Facebook",
+                                                "url": "https://facebook.com/officialorderzup"
+                                            },
+                                            {
+                                                "name": "LinkedIn",
+                                                "url": "https://linkedin.com/in/officialorderzup"
+                                            },
+                                            {
+                                                "name": "Instagram",
+                                                "url": "https://instagram.com/officialorderzup"
+                                            },
+                                            {
+                                                "name": "WhatsApp",
+                                                "url": "https://chat.whatsapp.com/KfXknYz3Zgg9MPu3l2WvTT"
+                                            }
+                                        ]
+                                    },
+                                    "align": "left",
+                                    "iconSize": 22,
+                                    "spacing": 3,
+                                    "displayCondition": null,
+                                    "_styleGuide": null,
+                                    "_meta": {
+                                        "htmlID": "u_content_social_1",
+                                        "htmlClassNames": "u_content_social"
+                                    },
+                                    "selectable": true,
+                                    "draggable": true,
+                                    "duplicatable": true,
+                                    "deletable": true,
+                                    "hideable": true,
+                                    "locked": false
+                                }
+                            }
+                        ],
+                        "values": {
+                            "backgroundColor": "",
+                            "padding": "0px",
+                            "borderRadius": "0px",
+                            "_meta": {
+                                "htmlID": "u_column_7",
+                                "htmlClassNames": "u_column"
+                            },
+                            "deletable": true,
+                            "locked": false
+                        }
+                    }
+                ],
+                "values": {
+                    "displayCondition": null,
+                    "columns": false,
+                    "_styleGuide": null,
+                    "backgroundColor": "#000434",
+                    "columnsBackgroundColor": "",
+                    "backgroundImage": {
+                        "url": "",
+                        "fullWidth": true,
+                        "repeat": "no-repeat",
+                        "size": "custom",
+                        "position": "center"
+                    },
+                    "padding": "0px",
+                    "anchor": "",
+                    "_meta": {
+                        "htmlID": "u_row_7",
+                        "htmlClassNames": "u_row"
+                    },
+                    "selectable": true,
+                    "draggable": true,
+                    "duplicatable": true,
+                    "deletable": true,
+                    "hideable": true,
+                    "locked": false
+                }
+            }
+        ],
+        "headers": [],
+        "footers": [],
+        "values": {
+            "_styleGuide": null,
+            "popupPosition": "center",
+            "popupDisplayDelay": 0,
+            "popupWidth": "600px",
+            "popupHeight": "auto",
+            "borderRadius": "10px",
+            "contentAlign": "center",
+            "contentVerticalAlign": "center",
+            "contentWidth": "500px",
+            "fontFamily": {
+                "label": "Arial",
+                "value": "arial,helvetica,sans-serif"
+            },
+            "textColor": "#000000",
+            "popupBackgroundColor": "#FFFFFF",
+            "popupBackgroundImage": {
+                "url": "",
+                "fullWidth": true,
+                "repeat": "no-repeat",
+                "size": "cover",
+                "position": "center"
+            },
+            "popupOverlay_backgroundColor": "rgba(0, 0, 0, 0.1)",
+            "popupCloseButton_position": "top-right",
+            "popupCloseButton_backgroundColor": "#DDDDDD",
+            "popupCloseButton_iconColor": "#000000",
+            "popupCloseButton_borderRadius": "0px",
+            "popupCloseButton_margin": "0px",
+            "popupCloseButton_action": {
+                "name": "close_popup",
+                "attrs": {
+                    "onClick": "document.querySelector('.u-popup-container').style.display = 'none';"
+                }
+            },
+            "backgroundColor": "#ffffff",
+            "preheaderText": "",
+            "linkStyle": {
+                "body": true,
+                "linkColor": "#000434",
+                "linkHoverColor": "#0000ee",
+                "linkUnderline": true,
+                "linkHoverUnderline": true,
+                "inherit": false
+            },
+            "backgroundImage": {
+                "url": "",
+                "fullWidth": true,
+                "repeat": "no-repeat",
+                "size": "custom",
+                "position": "center"
+            },
+            "_meta": {
+                "htmlID": "u_body",
+                "htmlClassNames": "u_body"
+            }
+        }
+    },
+    "schemaVersion": 21
+}

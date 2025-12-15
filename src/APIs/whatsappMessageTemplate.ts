@@ -1,13 +1,12 @@
 import { toast } from "react-toastify";
 import { appAxios } from "../axios/appAxios";
 import { whatsappMessageTemplates_url } from "../axios/urls";
-import type { WhatsAppTemplate } from "../screens/Dashboard/Marketing/Template.WhatsappMessage.Screen";
-
+// import type { WhatsAppTemplate } from "../screens/Dashboard/Marketing/Template.WhatsappMessage.Screen";
 
 export const getAllWhatsappMessageTemplates = async () => {
   try {
     const response = await appAxios.get(whatsappMessageTemplates_url);
-    return response.data as WhatsAppTemplate[];
+    return response.data as any[];
   } catch (error: any) {
     toast.error("Failed to fetch Whatsapp Message Templates.");
     throw error;
@@ -16,8 +15,10 @@ export const getAllWhatsappMessageTemplates = async () => {
 
 export const getWhatsappMessageTemplateById = async (id: any) => {
   try {
-    const response = await appAxios.get(whatsappMessageTemplates_url + "/" + id);
-    return response.data[0] as WhatsAppTemplate;
+    const response = await appAxios.get(
+      whatsappMessageTemplates_url + "/" + id
+    );
+    return response.data[0] as any;
   } catch (error: any) {
     toast.error("Failed to fetch Whatsapp Message Templates.");
     throw error;
@@ -37,7 +38,10 @@ export const createWhatsappMessageTemplate = async (data: any) => {
 
 export const updateWhatsappMessageTemplate = async (id: string, data: any) => {
   try {
-    const response = await appAxios.patch(`${whatsappMessageTemplates_url}/${id}`, data);
+    const response = await appAxios.patch(
+      `${whatsappMessageTemplates_url}/${id}`,
+      data
+    );
     toast.success("Whatsapp Message Template updated successfully!");
     return response.data;
   } catch (error: any) {

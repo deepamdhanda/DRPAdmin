@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Modal, Button, Form, Table, Row, Col } from "react-bootstrap";
+import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 import DataTable from "react-data-table-component";
 import { getOutgoingRemittanceById } from "../APIs/outgoingRemittance";
 import { toast } from "react-toastify";
@@ -8,8 +8,8 @@ import { createIncomingRemittance } from "../APIs/incomingRemittance";
 interface EditRemittanceModalProps {
   show: boolean;
   onHide: () => void;
-  onSubmit: (transfers: PartialTransferData[]) => void;
-  remittance: {
+  onSubmit?: (transfers: PartialTransferData[]) => void;
+  remittance?: {
     _id: string;
     totalAmount: number;
     transfers: [any];
@@ -45,13 +45,15 @@ interface CourierGroup {
 const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
   show,
   onHide,
-  onSubmit,
-  remittance,
+  // onSubmit,
+  // remittance,
 }) => {
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const [courierGroups, setCourierGroups] = useState<CourierGroup[]>([]);
-  const [orignalCourierGroups, setOrignalCourierGroups] = useState<CourierGroup[]>([]);
+  const [orignalCourierGroups, setOrignalCourierGroups] = useState<
+    CourierGroup[]
+  >([]);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
 
   // extra fields
@@ -75,7 +77,7 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
 
   const fetchInitialData = async () => {
     try {
-      const response = await getOutgoingRemittanceById('incoming');
+      const response = await getOutgoingRemittanceById("incoming");
       if (response) {
         setOrignalCourierGroups(response);
         setCourierGroups(response); // expecting backend to send grouped format
@@ -121,17 +123,24 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
 
     const lowerSearch = searchText.toLowerCase();
 
-    setCourierGroups(orignalCourierGroups
-      .map((group) => ({
-        ...group,
-        orders: group.orders.filter((order) => {
-          const str = order.awb_number + order._id + order.order_id + order.payment_method + order.total_amount + order.store_order_id
-          return str.toLowerCase().includes(lowerSearch)
-        }
-        ),
-      }))
-      .filter((group) => group.orders.length > 0));
-  }
+    setCourierGroups(
+      orignalCourierGroups
+        .map((group) => ({
+          ...group,
+          orders: group.orders.filter((order) => {
+            const str =
+              order.awb_number +
+              order._id +
+              order.order_id +
+              order.payment_method +
+              order.total_amount +
+              order.store_order_id;
+            return str.toLowerCase().includes(lowerSearch);
+          }),
+        }))
+        .filter((group) => group.orders.length > 0)
+    );
+  };
 
   // 4️⃣ Submit handler
   const handleSubmitOrders = async () => {
@@ -145,11 +154,8 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
       status,
     };
     try {
-      const response = await createIncomingRemittance(payload);
-
-    } catch {
-
-    }
+      await createIncomingRemittance(payload);
+    } catch {}
   };
 
   return (
@@ -158,7 +164,6 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
         <Modal.Title>Outgoing Remittance - Orders by Courier</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-
         {/* extra fields */}
         <Form>
           <Row>
@@ -177,7 +182,6 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
                 <Form.Label>COD Amount</Form.Label>
                 <Form.Control type="number" value={codAmount} readOnly />
               </Form.Group>
-
             </Col>
             <Col md={4}>
               <Form.Group className="mt-3">
@@ -192,14 +196,16 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
                   }
                 />
               </Form.Group>
-
             </Col>
             <Col md={4}>
               <Form.Group className="mt-3">
                 <Form.Label>Courier Commission</Form.Label>
-                <Form.Control type="number" value={courierCommission} readOnly />
+                <Form.Control
+                  type="number"
+                  value={courierCommission}
+                  readOnly
+                />
               </Form.Group>
-
             </Col>
             <Col md={4}>
               <Form.Group className="mt-3">
@@ -212,7 +218,6 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
                   onFocus={openCalendar}
                 />
               </Form.Group>
-
             </Col>
             <Col md={4}>
               <Form.Group className="mt-3">
@@ -255,7 +260,10 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
                   width: "50px",
                 },
                 { name: "Order ID", selector: (row) => row.order_id },
-                { name: "Store Order ID", selector: (row) => row.store_order_id },
+                {
+                  name: "Store Order ID",
+                  selector: (row) => row.store_order_id,
+                },
                 { name: "Amount", selector: (row) => `₹${row.total_amount}` },
                 { name: "AWB Number", selector: (row) => row.awb_number },
                 { name: "Payment", selector: (row) => row.payment_method },
@@ -266,7 +274,6 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
             />
           </div>
         ))}
-
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>
@@ -280,7 +287,7 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
           Submit Selected Orders
         </Button>
       </Modal.Footer>
-    </Modal >
+    </Modal>
   );
 };
 

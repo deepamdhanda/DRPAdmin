@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Form, Button, Card, Alert } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  Button,
+  Card,
+  Alert,
+} from "react-bootstrap";
+import { BASE_URL } from "../../../axios/urls";
+import { appAxios } from "../../../axios/appAxios";
 
 interface ButtonConfig {
   type: "QUICK_REPLY" | "URL" | "PHONE_NUMBER";
@@ -48,33 +58,42 @@ const CreateTemplatePage: React.FC = () => {
         footer ? { type: "FOOTER", text: footer } : null,
         buttons.length > 0
           ? {
-            type: "BUTTONS",
-            buttons: buttons.map((btn) => {
-              if (btn.type === "QUICK_REPLY") {
-                return { type: "QUICK_REPLY", text: btn.text };
-              }
-              if (btn.type === "URL") {
-                return { type: "URL", text: btn.text, url: btn.payload };
-              }
-              if (btn.type === "PHONE_NUMBER") {
-                return { type: "PHONE_NUMBER", text: btn.text, phone_number: btn.payload };
-              }
-              return null;
-            }).filter(Boolean),
-          }
+              type: "BUTTONS",
+              buttons: buttons
+                .map((btn) => {
+                  if (btn.type === "QUICK_REPLY") {
+                    return { type: "QUICK_REPLY", text: btn.text };
+                  }
+                  if (btn.type === "URL") {
+                    return { type: "URL", text: btn.text, url: btn.payload };
+                  }
+                  if (btn.type === "PHONE_NUMBER") {
+                    return {
+                      type: "PHONE_NUMBER",
+                      text: btn.text,
+                      phone_number: btn.payload,
+                    };
+                  }
+                  return null;
+                })
+                .filter(Boolean),
+            }
           : null,
       ].filter(Boolean),
     };
 
     try {
       setLoading(true);
-      const res = await fetch("/api/whatsapp/templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      // const res = await fetch(`${BASE_URL}/whatsapp/template`, {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(payload),
+      // });
+      const res = await appAxios.post(`${BASE_URL}/whatsapp/template`, {
+        payload,
       });
 
-      if (!res.ok) throw new Error("Failed to create template");
+      if (!res) throw new Error("Failed to create template");
 
       setSuccess("Template created successfully! 🎉");
       setName("");
@@ -111,7 +130,8 @@ const CreateTemplatePage: React.FC = () => {
                 required
               />
               <Form.Text className="text-muted">
-                Use lowercase, numbers, and underscores only (e.g., order_update_1).
+                Use lowercase, numbers, and underscores only (e.g.,
+                order_update_1).
               </Form.Text>
             </Form.Group>
 
@@ -120,7 +140,10 @@ const CreateTemplatePage: React.FC = () => {
               <Col md={6}>
                 <Form.Group>
                   <Form.Label>Category</Form.Label>
-                  <Form.Select value={category} onChange={(e) => setCategory(e.target.value)}>
+                  <Form.Select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
                     <option value="MARKETING">MARKETING</option>
                     <option value="UTILITY">UTILITY</option>
                     <option value="AUTHENTICATION">AUTHENTICATION</option>
@@ -130,7 +153,10 @@ const CreateTemplatePage: React.FC = () => {
               <Col md={6}>
                 <Form.Group>
                   <Form.Label>Language</Form.Label>
-                  <Form.Select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                  <Form.Select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                  >
                     <option value="en_US">English (US)</option>
                     <option value="hi_IN">Hindi (IN)</option>
                   </Form.Select>
@@ -161,7 +187,8 @@ const CreateTemplatePage: React.FC = () => {
                 required
               />
               <Form.Text className="text-muted">
-                You can use variables like {"{{1}}"}, {"{{2}}"} for personalization.
+                You can use variables like {"{{1}}"}, {"{{2}}"} for
+                personalization.
               </Form.Text>
             </Form.Group>
 
@@ -186,7 +213,8 @@ const CreateTemplatePage: React.FC = () => {
                       value={btn.type}
                       onChange={(e) => {
                         const updated = [...buttons];
-                        updated[idx].type = e.target.value as ButtonConfig["type"];
+                        updated[idx].type = e.target
+                          .value as ButtonConfig["type"];
                         setButtons(updated);
                       }}
                     >
@@ -212,7 +240,11 @@ const CreateTemplatePage: React.FC = () => {
                     {btn.type !== "QUICK_REPLY" && (
                       <Form.Control
                         type="text"
-                        placeholder={btn.type === "URL" ? "Enter URL" : "Enter phone number"}
+                        placeholder={
+                          btn.type === "URL"
+                            ? "Enter URL"
+                            : "Enter phone number"
+                        }
                         value={btn.payload || ""}
                         onChange={(e) => {
                           const updated = [...buttons];
@@ -224,7 +256,11 @@ const CreateTemplatePage: React.FC = () => {
                     )}
                   </Col>
                   <Col md={1} className="d-flex align-items-center">
-                    <Button variant="outline-danger" size="sm" onClick={() => removeButton(idx)}>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => removeButton(idx)}
+                    >
                       ✕
                     </Button>
                   </Col>

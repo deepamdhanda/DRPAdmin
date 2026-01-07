@@ -17,6 +17,12 @@ export interface IncomingRemittance {
     status: string;
     masked_account_number: string;
     createdAt: string;
+    codAmount: number;
+    courierCommission: number;
+    tdsAmount: number;
+    tcsAmount: number;
+    netAmountReceived: number;
+    receivedDate: Date;
     orders: {
         order_id: string;
         channel_order_id: string;
@@ -25,6 +31,7 @@ export interface IncomingRemittance {
         awb_number?: string;
         courier_name?: string;
         channel_account_name?: string;
+        pool_name?: string;
         product_sku_id?: string;
         product_sku_name?: string;
     }[];
@@ -86,7 +93,7 @@ const IncomingRemittances: React.FC = () => {
     const columns = [
         {
             name: "Reference ID",
-            selector: (row: IncomingRemittance) => row.referenceId || "—",
+            selector: (row: IncomingRemittance) => row._id || "—",
             sortable: true,
             minWidth: "200px",
         },

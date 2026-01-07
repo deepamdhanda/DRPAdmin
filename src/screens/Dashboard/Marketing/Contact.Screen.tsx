@@ -17,6 +17,7 @@ import {
 } from '../../../APIs/contact'; // <-- replace with your actual paths
 import { getAllContactLists } from '../../../APIs/contactList';
 import { createAmazonS3 } from '../../../APIs/amazonS3';
+import axios from 'axios';
 
 export interface Contact {
     _id?: string;
@@ -148,6 +149,16 @@ const ContactScreen: React.FC = () => {
         }
     };
 
+    const createCall = async (phone: string | undefined) => {
+        if (phone) {
+            const res = await axios.get(`https://www.bulksmsplans.com/api/ivr/makeACall?api_id=APIjkKnTB1R147078&api_password=Yku7gJ9Z&ivr_number=1732332636&dial=agent&receiver_number=${phone}&agent_number=7009168180`)
+            if (res.data.code === 200) {
+                toast.success("Call initiated successfully");
+            } else {
+                toast.error("Failed to initiate call");
+            }
+        }
+    }
 
     const columns = [
         {
@@ -179,7 +190,7 @@ const ContactScreen: React.FC = () => {
                     <div>
                         <a
                             className="btn btn-primary btn-sm me-2"
-                            href={row.phone ? `tel:${row.phone}` : '#'}
+                            onClick={() => createCall(row.phone)}
                         >
                             {row.phone || '-'}
                         </a>
@@ -274,6 +285,7 @@ const ContactScreen: React.FC = () => {
                 data={contacts}
                 pagination
                 paginationRowsPerPageOptions={[50, 100, 200, 500, 1000]}
+                paginationPerPage={50}
                 striped
                 highlightOnHover
                 responsive

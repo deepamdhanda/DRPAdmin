@@ -230,7 +230,7 @@ const TicketScreen: React.FC = () => {
     const sendReply = async (ticketId: string) => {
         if (!replyTexts[ticketId]?.trim()) return;
         try {
-            await axios.post(`/api/tickets/${ticketId}/reply`, { message: replyTexts[ticketId] });
+            await axios.post(`/tickets/${ticketId}/reply`, { message: replyTexts[ticketId] });
             alert('Reply sent');
             setReplyTexts((prev) => ({ ...prev, [ticketId]: '' }));
             // TODO: Refresh or update ticket replies in state here for instant UI update

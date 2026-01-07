@@ -64,7 +64,7 @@ Axios.interceptors.response.use(
                 finalRedirect = `?redirect=${encodeURIComponent(window.location.pathname + search)}`;
             }
 
-            // window.location.href = `/login${finalRedirect}`;
+            window.location.href = `/login${finalRedirect}`;
         }
 
 

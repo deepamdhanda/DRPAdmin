@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Modal, Button, Form, Table, Row, Col } from "react-bootstrap";
+import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 import DataTable from "react-data-table-component";
 import { getOutgoingRemittanceById } from "../APIs/outgoingRemittance";
 import { toast } from "react-toastify";
@@ -45,8 +45,8 @@ interface CourierGroup {
 const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
   show,
   onHide,
-  onSubmit,
-  remittance,
+  // onSubmit,
+  // remittance,
 }) => {
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -145,7 +145,7 @@ const EditIncomingRemittanceModal: React.FC<EditRemittanceModalProps> = ({
       status,
     };
     try {
-      const response = await createIncomingRemittance(payload);
+      await createIncomingRemittance(payload);
 
     } catch {
 

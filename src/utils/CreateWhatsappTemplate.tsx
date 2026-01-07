@@ -14,7 +14,10 @@ type CreateTemplatePageProps = {
   onSubmit: (data: any) => void;
 };
 
-const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit }) => {
+const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({
+  edit,
+  onSubmit,
+}) => {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("MARKETING");
   const [language, setLanguage] = useState("en_US");
@@ -22,21 +25,23 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
   const [body, setBody] = useState("");
   const [footer, setFooter] = useState("");
   const [buttons, setButtons] = useState<ButtonConfig[]>([]);
-  const [variableExamples, setVariableExamples] = useState<{ [key: string]: string }>({});
+  const [variableExamples, setVariableExamples] = useState<{
+    [key: string]: string;
+  }>({});
   const [loading, setLoading] = useState(false);
-
-
 
   const updateVariableExamples = () => {
     const varsInBody = extractVariables(body);
     const varsInHeader = extractVariables(header);
     const varsInFooter = extractVariables(footer);
-    const allVars = Array.from(new Set([...varsInBody, ...varsInHeader, ...varsInFooter]));
+    const allVars = Array.from(
+      new Set([...varsInBody, ...varsInHeader, ...varsInFooter])
+    );
 
     // Add new variables with empty string if not already in state
-    setVariableExamples(prev => {
+    setVariableExamples((prev) => {
       const updated: { [key: string]: string } = {};
-      allVars.forEach(v => {
+      allVars.forEach((v) => {
         updated[v] = prev[v] || "";
       });
       return updated;
@@ -48,21 +53,36 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
   }, [body, header, footer, buttons]);
 
   useEffect(() => {
-    if (edit) {
+    console.log("Value of Edit", edit);
+    if (edit.name != "") {
+      console.log("working and is causing crash");
       // console.log(edit[0].name, 'edit')
       setName(edit?.[0].name);
       setCategory(edit?.[0].category);
       setLanguage(edit?.[0].language);
-      setHeader(edit?.[0]?.components?.filter((i: any) => i.type === "HEADER")?.[0]?.text);
-      setBody(edit?.[0]?.components?.filter((i: any) => i.type === "BODY")?.[0]?.text);
-      setFooter(edit?.[0]?.components?.filter((i: any) => i.type === "FOOTER")?.[0]?.text);
-      setButtons(edit?.[0]?.components?.filter((i: any) => i.type === "BUTTONS")?.[0]?.buttons);
+      setHeader(
+        edit?.[0]?.components?.filter((i: any) => i.type === "HEADER")?.[0]
+          ?.text
+      );
+      setBody(
+        edit?.[0]?.components?.filter((i: any) => i.type === "BODY")?.[0]?.text
+      );
+      setFooter(
+        edit?.[0]?.components?.filter((i: any) => i.type === "FOOTER")?.[0]
+          ?.text
+      );
+      setButtons(
+        edit?.[0]?.components?.filter((i: any) => i.type === "BUTTONS")?.[0]
+          ?.buttons
+      );
       setVariableExamples(edit.variableExamples || {});
     }
   }, [edit]);
 
-  const addButton = () => setButtons([...buttons, { type: "QUICK_REPLY", text: "" }]);
-  const removeButton = (index: number) => setButtons(buttons.filter((_, idx) => idx !== index));
+  const addButton = () =>
+    setButtons([...buttons, { type: "QUICK_REPLY", text: "" }]);
+  const removeButton = (index: number) =>
+    setButtons(buttons.filter((_, idx) => idx !== index));
 
   const extractVariables = (text: string): string[] => {
     const regex = /{{(.*?)}}/g;
@@ -81,43 +101,52 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
     // HEADER
     if (header) {
       const headerVars = extractVariables(header);
-      const headerExamples = headerVars.map(v => ({
+      const headerExamples = headerVars.map((v) => ({
         param_name: v,
-        example: variableExamples[v] || ""
+        example: variableExamples[v] || "",
       }));
       components.push({
         type: "HEADER",
         format: "TEXT",
         text: header,
-        example: headerVars.length > 0 ? { header_text_named_params: headerExamples } : undefined
+        example:
+          headerVars.length > 0
+            ? { header_text_named_params: headerExamples }
+            : undefined,
       });
     }
 
     // BODY
     if (body) {
       const bodyVars = extractVariables(body);
-      const bodyExamples = bodyVars.map(v => ({
+      const bodyExamples = bodyVars.map((v) => ({
         param_name: v,
-        example: variableExamples[v] || ""
+        example: variableExamples[v] || "",
       }));
       components.push({
         type: "BODY",
         text: body,
-        example: bodyVars.length > 0 ? { body_text_named_params: bodyExamples } : undefined
+        example:
+          bodyVars.length > 0
+            ? { body_text_named_params: bodyExamples }
+            : undefined,
       });
     }
 
     // FOOTER
     if (footer) {
       const footerVars = extractVariables(footer);
-      const footerExamples = footerVars.map(v => ({
+      const footerExamples = footerVars.map((v) => ({
         param_name: v,
-        example: variableExamples[v] || ""
+        example: variableExamples[v] || "",
       }));
       components.push({
         type: "FOOTER",
         text: footer,
-        example: footerVars.length > 0 ? { footer_text_named_params: footerExamples } : undefined
+        example:
+          footerVars.length > 0
+            ? { footer_text_named_params: footerExamples }
+            : undefined,
       });
     }
 
@@ -125,20 +154,26 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
     if (buttons.length > 0) {
       components.push({
         type: "BUTTONS",
-        buttons: buttons.map((btn: any) => {
-          if (btn.type === "QUICK_REPLY") return { type: "QUICK_REPLY", text: btn.text };
-          if (btn.type === "URL") return { type: "URL", text: btn.text, url: btn.payload };
-          if (btn.type === "PHONE_NUMBER") return { type: "PHONE_NUMBER", text: btn.text, phone_number: btn.payload };
-          return null;
-        }).filter(Boolean),
+        buttons: buttons
+          .map((btn: any) => {
+            if (btn.type === "QUICK_REPLY")
+              return { type: "QUICK_REPLY", text: btn.text };
+            if (btn.type === "URL")
+              return { type: "URL", text: btn.text, url: btn.payload };
+            if (btn.type === "PHONE_NUMBER")
+              return {
+                type: "PHONE_NUMBER",
+                text: btn.text,
+                phone_number: btn.payload,
+              };
+            return null;
+          })
+          .filter(Boolean),
       });
     }
 
     return components;
   };
-
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,8 +182,6 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
       toast.error("Template name and body are required.");
       return;
     }
-
-
 
     const payload = {
       name,
@@ -174,7 +207,10 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
       <Form onSubmit={handleSubmit}>
         {/* Template Name */}
         <Form.Group className="mb-3">
-          <Form.Label>Template Name <span className="text-muted">(example: order_update_1)</span></Form.Label>
+          <Form.Label>
+            Template Name{" "}
+            <span className="text-muted">(example: order_update_1)</span>
+          </Form.Label>
           <Form.Control
             type="text"
             placeholder="Enter template name (lowercase, underscores)"
@@ -189,7 +225,10 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
           <Col md={6}>
             <Form.Group>
               <Form.Label>Category</Form.Label>
-              <Form.Select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <Form.Select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
                 <option value="MARKETING">Marketing</option>
                 <option value="UTILITY">UTILITY</option>
               </Form.Select>
@@ -198,7 +237,10 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
           <Col md={6}>
             <Form.Group>
               <Form.Label>Language</Form.Label>
-              <Form.Select value={language} onChange={(e) => setLanguage(e.target.value)}>
+              <Form.Select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+              >
                 <option value="en_US">English (US)</option>
                 <option value="hi_IN">Hindi (IN)</option>
                 <option value="es_ES">Spanish (ES)</option>
@@ -230,7 +272,8 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
             required
           />
           <Form.Text className="text-muted">
-            Example: "Hello {"{{full_name}}"}, your order #{"{{order_id}}"} has been shipped."
+            Example: "Hello {"{{full_name}}"}, your order #{"{{order_id}}"} has
+            been shipped."
           </Form.Text>
         </Form.Group>
 
@@ -258,7 +301,10 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
                     placeholder={`Enter example for ${v} (e.g., John Doe)`}
                     value={variableExamples[v]}
                     onChange={(e) => {
-                      setVariableExamples(prev => ({ ...prev, [v]: e.target.value }));
+                      setVariableExamples((prev) => ({
+                        ...prev,
+                        [v]: e.target.value,
+                      }));
                     }}
                   />
                 </Form.Group>
@@ -289,7 +335,11 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
               <Col md={4}>
                 <Form.Control
                   type="text"
-                  placeholder={btn.type === "QUICK_REPLY" ? "Quick reply text (Yes/No)" : "Button text"}
+                  placeholder={
+                    btn.type === "QUICK_REPLY"
+                      ? "Quick reply text (Yes/No)"
+                      : "Button text"
+                  }
                   value={btn.text}
                   onChange={(e) => {
                     const updated = [...buttons];
@@ -303,7 +353,11 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
                 {btn.type !== "QUICK_REPLY" && (
                   <Form.Control
                     type="text"
-                    placeholder={btn.type === "URL" ? "Enter URL (https://example.com)" : "Enter phone number (+919876543210)"}
+                    placeholder={
+                      btn.type === "URL"
+                        ? "Enter URL (https://example.com)"
+                        : "Enter phone number (+919876543210)"
+                    }
                     value={btn.payload || btn.url || ""}
                     onChange={(e) => {
                       const updated = [...buttons];
@@ -315,7 +369,11 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
                 )}
               </Col>
               <Col md={1} className="d-flex align-items-center">
-                <Button variant="outline-danger" size="sm" onClick={() => removeButton(idx)}>
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={() => removeButton(idx)}
+                >
                   ✕
                 </Button>
               </Col>
@@ -341,7 +399,10 @@ const CreateTemplatePage: React.FC<CreateTemplatePageProps> = ({ edit, onSubmit 
           <div className="border rounded p-3 bg-light">
             {header && <h6 className="text-muted">{header}</h6>}
             <p>
-              {body?.replace(/{{\s*[\w]+\s*}}/g, (v) => variableExamples[v] || v)}
+              {body?.replace(
+                /{{\s*[\w]+\s*}}/g,
+                (v) => variableExamples[v] || v
+              )}
             </p>
             {footer && <small className="text-muted">{footer}</small>}
             <div className="mt-3">

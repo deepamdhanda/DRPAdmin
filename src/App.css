@@ -40,3 +40,12 @@
 .read-the-docs {
   color: #888;
 }
+
+.contact-badge {
+  border: 1px solid #d4d4d4;
+  padding: 2px 8px;
+  color: white;
+  border-radius: 4px;
+  background: #000;
+  text-transform: capitalize;
+}

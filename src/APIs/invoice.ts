@@ -9,14 +9,16 @@ oneMonthBack.setMonth(oneMonthBack.getMonth() - 1);
 // Convert to yyyy-mm-dd (HTML date input requirement)
 const formatDate = (d: Date) => d.toISOString().split("T")[0];
 
-
-export const getAllInvoices = async (start_date = formatDate(oneMonthBack), end_date = formatDate(today)) => {
+export const getAllInvoices = async (
+  start_date = formatDate(oneMonthBack),
+  end_date = formatDate(today)
+) => {
   try {
     const response = await appAxios.get(invoices_url, {
       params: {
         start_date,
-        end_date
-      }
+        end_date,
+      },
     });
     return response.data as any;
   } catch (error: any) {

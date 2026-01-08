@@ -7,6 +7,7 @@ import {
   getAllContacts,
   createContact,
   updateContact,
+  deactivateContact,
 } from "../../../APIs/contact";
 import { getAllContactLists } from "../../../APIs/contactList";
 import { createAmazonS3 } from "../../../APIs/amazonS3";
@@ -126,6 +127,14 @@ const ContactScreen: React.FC = () => {
     fetchData();
   }, [fetchData, refetch]);
 
+  const deleteEntry = async (id: string) => {
+    try {
+      await deactivateContact(id);
+      setRefetch(!refetch);
+    } catch (err) {
+      console.log(err);
+    }
+  };
   const resetForm = useCallback(() => {
     setForm({
       name: "",
@@ -441,7 +450,14 @@ const ContactScreen: React.FC = () => {
     {
       name: "Actions",
       cell: (row: Contact) => (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            padding: "10px 0",
+          }}
+        >
           <Form.Select
             size="sm"
             value={row.lead_type || ""}
@@ -464,6 +480,9 @@ const ContactScreen: React.FC = () => {
             <option value="converted">Converted</option>
             <option value="lost">Lost</option>
           </Form.Select>
+          <button onClick={() => deleteEntry(row._id || "")}>
+            Delete Entry
+          </button>
         </div>
       ),
       width: "150px",
@@ -753,7 +772,10 @@ const ContactScreen: React.FC = () => {
                 </div>
                 <button
                   className="btn btn-sm btn-outline-primary my-2"
-                  onClick={() => setShowRemarksModal(!showRemarksModal)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowRemarksModal(!showRemarksModal);
+                  }}
                 >
                   {showRemarksModal ? "Hide" : "Show"} Remarks
                 </button>

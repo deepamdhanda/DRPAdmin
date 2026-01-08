@@ -3,7 +3,6 @@ import { appAxios } from "../axios/appAxios";
 import { contacts_url } from "../axios/urls";
 import type { Contact } from "../screens/Dashboard/Marketing/Contact.Screen";
 
-
 export const getAllContacts = async () => {
   try {
     const response = await appAxios.get(contacts_url);
@@ -52,6 +51,16 @@ export const deleteContact = async (id: string) => {
     toast.success("Contact  deleted successfully!");
   } catch (error: any) {
     toast.error("Failed to delete Contact .");
+    throw error;
+  }
+};
+
+export const deactivateContact = async (id: string) => {
+  try {
+    await appAxios.post(`${contacts_url}/${id}`);
+    toast.success("Contact  deactivated successfully!");
+  } catch (error) {
+    toast.error("Failed to delete contact");
     throw error;
   }
 };

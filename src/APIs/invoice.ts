@@ -1,7 +1,7 @@
 import { toast } from "react-toastify";
 import { appAxios } from "../axios/appAxios";
 import { invoices_url } from "../axios/urls";
-import type { Invoice } from "../screens/Dashboard/Invoice.Screen";
+
 const today = new Date();
 const oneMonthBack = new Date();
 oneMonthBack.setMonth(oneMonthBack.getMonth() - 1);
@@ -20,7 +20,7 @@ export const getAllInvoices = async (
         end_date,
       },
     });
-    return response.data as Invoice[];
+    return response.data as any;
   } catch (error: any) {
     toast.error("Failed to fetch Invoice s.");
     throw error;

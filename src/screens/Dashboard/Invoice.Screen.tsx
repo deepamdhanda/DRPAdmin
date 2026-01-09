@@ -6,6 +6,13 @@ import { getAllInvoices } from "../../APIs/invoice";
 import { utils as XLSXUtils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+// import type { jsPDFOptions } from "jspdf";
+
+declare module "jspdf" {
+    interface jsPDF {
+        autoTable: (options: any) => jsPDF;
+    }
+}
 
 export interface Invoice {
   invoice_id: string;

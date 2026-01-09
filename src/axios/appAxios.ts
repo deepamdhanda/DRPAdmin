@@ -1,11 +1,10 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import _ from "lodash";
-import { BASE_URL } from "./urls";
 
 // Create Axios instance with base URL and content-type headers
 const Axios = axios.create({
-  baseURL: BASE_URL,
+  // baseURL: BASE_URL,
   withCredentials: true, // Enable sending cookies with requests
   headers: {
     "Content-Type": "application/json",

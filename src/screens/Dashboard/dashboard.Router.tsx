@@ -6,7 +6,6 @@ import UserScreen from "./User.Screen.tsx";
 import AmazonS3Screen from "./AmazonS3.Screen.tsx";
 import ContactListScreen from "./Marketing/ContactLists.Screen.tsx";
 import ContactScreen from "./Marketing/Contact.Screen.tsx";
-import WhatsAppTemplatesScreen from "./Marketing/Template.WhatsappMessage.Screen.tsx";
 import EmailTemplates from "./Marketing/Template.Email.Screen.tsx";
 import { OutgoingRemittances } from "./OutgoingRemittace.Screen.tsx";
 import { IncomingRemittances } from "./IncomingRemittace.Screen.tsx";
@@ -66,10 +65,6 @@ export const dashboardRoutes = [
       {
         path: "template/email",
         element: <EmailTemplates />,
-      },
-      {
-        path: "template/whatsappMessage",
-        element: <WhatsAppTemplatesScreen />,
       },
       {
         path: "createAutomation/:automationId?",

@@ -38,7 +38,7 @@ interface Remark {
   commentedBy?: string;
   fileLink?: string;
   file?: File;
-  createdAt?: string;
+  createdAt?: Date | string;
 }
 
 interface ContactForm {
@@ -57,9 +57,9 @@ interface ContactForm {
 
 const getLeadColor = (lead: string | undefined): string => {
   const colors = {
-    cold: "#60a5fa",
-    warm: "#fcd34d",
-    hot: "#f97316",
+    cold: "#ef4444           ",
+    warm: "#fde047",
+    hot: "#22c55e",
   };
   return colors[lead as keyof typeof colors] || "#737373";
 };
@@ -87,10 +87,10 @@ const convertFileToBase64 = (file: File): Promise<string> => {
 };
 
 const ContactScreen: React.FC = () => {
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactLists, setContactLists] = useState<ContactList[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [refetch, setRefetch] = useState(false);
@@ -512,6 +512,7 @@ const ContactScreen: React.FC = () => {
       />
 
       {/* Edit/Create Contact Modal */}
+
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
@@ -631,99 +632,53 @@ const ContactScreen: React.FC = () => {
             {editingId && (
               <>
                 <hr />
-                <h6 style={{ marginBottom: "15px" }}>Remarks</h6>
 
-                {/* Display existing remarks for editing */}
-                {showRemarksModal &&
-                  editingRemarks.map((remark, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: "12px",
-                        border: "1px solid #ddd",
-                        borderRadius: "6px",
-                        marginBottom: "12px",
-                        backgroundColor: "#f9f9f9",
-                      }}
-                    >
-                      <Row>
-                        <Col md={12}>
-                          <Form.Group className="mb-2">
-                            <Form.Label
-                              style={{ fontSize: "13px", fontWeight: "600" }}
-                            >
-                              Comment
-                            </Form.Label>
-                            <Form.Control
-                              as="textarea"
-                              rows={2}
-                              value={remark.comment}
-                              onChange={(e) => {
-                                const updated = [...editingRemarks];
-                                updated[idx].comment = e.target.value;
-                                setEditingRemarks(updated);
-                              }}
-                            />
-                          </Form.Group>
-                        </Col>
-                        <Col md={12}>
-                          {remark.fileLink && (
-                            <div style={{ marginBottom: "8px" }}>
-                              <a
-                                href={remark.fileLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{ fontSize: "13px", fontWeight: "600" }}
-                              >
-                                📎 Current File
-                              </a>
-                            </div>
-                          )}
-                          <Form.Group className="mb-2">
-                            <Form.Label style={{ fontSize: "13px" }}>
-                              Replace File (optional)
-                            </Form.Label>
-                            <Form.Control
-                              type="file"
-                              size="sm"
-                              onChange={async (e: any) => {
-                                if (e.target.files?.[0]) {
-                                  const file = e.target.files[0];
-                                  const base64 = await convertFileToBase64(
-                                    file
-                                  );
-                                  const uploaded = await createAmazonS3({
-                                    fileName: `remarks/${Date.now()}_${
-                                      file.name
-                                    }`,
-                                    fileContent: base64,
-                                  });
-                                  const updated = [...editingRemarks];
-                                  updated[idx].fileLink = uploaded.url;
-                                  setEditingRemarks(updated);
-                                  toast.success("File uploaded");
-                                }
-                              }}
-                            />
-                          </Form.Group>
-                        </Col>
-                      </Row>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => {
-                          const updated = editingRemarks.filter(
-                            (_, i) => i !== idx
-                          );
-                          setEditingRemarks(updated);
-                        }}
+                {/* 1. Show Latest Remark Only */}
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h6 className="mb-0">Latest Remark</h6>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setShowHistoryModal(true)}
+                  >
+                    View All History ({editingRemarks.length})
+                  </Button>
+                </div>
+
+                {editingRemarks.length > 0 ? (
+                  <div
+                    style={{
+                      padding: "10px",
+                      border: "1px solid #eee",
+                      borderRadius: "6px",
+                      backgroundColor: "#fcfcfc",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    <small className="text-muted d-block mb-1">
+                      {editingRemarks[0].createdAt
+                        ? new Date(editingRemarks[0].createdAt).toLocaleString()
+                        : ""}
+                    </small>
+                    <p className="mb-1" style={{ fontSize: "14px" }}>
+                      {editingRemarks[0].comment}
+                    </p>
+                    {editingRemarks[0].fileLink && (
+                      <a
+                        href={editingRemarks[0].fileLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ fontSize: "12px" }}
                       >
-                        Delete Remark
-                      </Button>
-                    </div>
-                  ))}
+                        📎 View Attachment
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-muted small">No remarks found.</p>
+                )}
 
-                {/* Add new remark section */}
+                {/* 2. Add New Remark Section */}
                 <div
                   style={{
                     padding: "12px",
@@ -737,12 +692,12 @@ const ContactScreen: React.FC = () => {
                   </h6>
                   <Row>
                     <Col md={12}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Comment</Form.Label>
+                      <Form.Group className="mb-2">
                         <Form.Control
                           as="textarea"
-                          rows={3}
-                          value={form.newRemark}
+                          rows={2}
+                          placeholder="Type your new remark here..."
+                          value={form.newRemark || ""}
                           onChange={(e) =>
                             setForm((f) => ({
                               ...f,
@@ -753,32 +708,21 @@ const ContactScreen: React.FC = () => {
                       </Form.Group>
                     </Col>
                     <Col md={12}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Attachment</Form.Label>
-                        <Form.Control
-                          type="file"
-                          onChange={(e: any) => {
-                            if (e.target.files?.[0]) {
-                              setForm((f) => ({
-                                ...f,
-                                newRemarkFile: e.target.files[0],
-                              }));
-                            }
-                          }}
-                        />
-                      </Form.Group>
+                      <Form.Control
+                        type="file"
+                        size="sm"
+                        onChange={(e: any) => {
+                          if (e.target.files?.[0]) {
+                            setForm((f) => ({
+                              ...f,
+                              newRemarkFile: e.target.files[0],
+                            }));
+                          }
+                        }}
+                      />
                     </Col>
                   </Row>
                 </div>
-                <button
-                  className="btn btn-sm btn-outline-primary my-2"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowRemarksModal(!showRemarksModal);
-                  }}
-                >
-                  {showRemarksModal ? "Hide" : "Show"} Remarks
-                </button>
               </>
             )}
           </Form>
@@ -789,6 +733,106 @@ const ContactScreen: React.FC = () => {
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={loading}>
             {loading ? <Spinner animation="border" size="sm" /> : "Save"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      {/* --- History Popup Modal --- */}
+      <Modal
+        show={showHistoryModal}
+        onHide={() => setShowHistoryModal(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Remarks History</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
+          {editingRemarks.length === 0 ? (
+            <p className="text-center py-4">No remarks recorded yet.</p>
+          ) : (
+            editingRemarks.map((remark, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: "12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  marginBottom: "12px",
+                  backgroundColor: "#f9f9f9",
+                }}
+              >
+                <div className="d-flex justify-content-between mb-2">
+                  <small className="text-muted">
+                    {remark.createdAt
+                      ? new Date(remark.createdAt).toUTCString()
+                      : "New Remark"}
+                  </small>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    style={{ fontSize: "10px", padding: "2px 5px" }}
+                    onClick={() => {
+                      const updated = editingRemarks.filter(
+                        (_, i) => i !== idx
+                      );
+                      setEditingRemarks(updated);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
+
+                <Form.Group className="mb-2">
+                  <Form.Control
+                    as="textarea"
+                    rows={2}
+                    value={remark.comment}
+                    onChange={(e) => {
+                      const updated = [...editingRemarks];
+                      updated[idx].comment = e.target.value;
+                      setEditingRemarks(updated);
+                    }}
+                  />
+                </Form.Group>
+
+                {remark.fileLink && (
+                  <div className="mb-2">
+                    <a
+                      href={remark.fileLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: "13px" }}
+                    >
+                      📎 View Current Attachment
+                    </a>
+                  </div>
+                )}
+
+                <Form.Control
+                  type="file"
+                  size="sm"
+                  onChange={async (e: any) => {
+                    if (e.target.files?.[0]) {
+                      const file = e.target.files[0];
+                      const base64 = await convertFileToBase64(file);
+                      const uploaded = await createAmazonS3({
+                        fileName: `remarks/${Date.now()}_${file.name}`,
+                        fileContent: base64,
+                      });
+                      const updated = [...editingRemarks];
+                      updated[idx].fileLink = uploaded.url;
+                      setEditingRemarks(updated);
+                      toast.success("File replaced");
+                    }
+                  }}
+                />
+              </div>
+            ))
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowHistoryModal(false)}>
+            Done
           </Button>
         </Modal.Footer>
       </Modal>

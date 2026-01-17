@@ -12,6 +12,7 @@ import { IncomingRemittances } from "./IncomingRemittace.Screen.tsx";
 import { Invoice } from "./Invoice.Screen.tsx";
 import { whatsappRoutes } from "./Whatsapp/whatsapp.Router.tsx";
 import KycVerification from "./kyc-verification.screen.tsx";
+import WeightDiscrepancy from "./WeightDiscrepancy.tsx";
 
 export const dashboardRoutes = [
   {
@@ -46,7 +47,10 @@ export const dashboardRoutes = [
     path: "kyc-verification",
     element: <KycVerification />,
   },
-
+  {
+    path: "weight-discrepancy",
+    element: <WeightDiscrepancy />,
+  },
   {
     path: "marketing",
     children: [

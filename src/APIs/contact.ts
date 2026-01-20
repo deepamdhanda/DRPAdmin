@@ -64,3 +64,15 @@ export const deactivateContact = async (id: string) => {
     throw error;
   }
 };
+
+export const addRemarkToContact = async (
+  id: string,
+  data: { comment: string; fileLink: string }
+) => {
+  try {
+    await appAxios.post(`${contacts_url}/${id}/remarks`, data);
+  } catch (error) {
+    toast.error("Failed to add remark");
+    throw error;
+  }
+};

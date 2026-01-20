@@ -1,5 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Button, Modal, Form, Row, Col, Spinner, Badge } from "react-bootstrap";
+import {
+  Button,
+  Modal,
+  Form,
+  Row,
+  Col,
+  Spinner,
+  Badge,
+  Card,
+} from "react-bootstrap";
 import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
 import type { ContactList } from "./ContactLists.Screen";
@@ -8,10 +17,12 @@ import {
   createContact,
   updateContact,
   deactivateContact,
+  addRemarkToContact, // Ensure this is exported in your APIs/contact.ts
 } from "../../../APIs/contact";
 import { getAllContactLists } from "../../../APIs/contactList";
 import { createAmazonS3 } from "../../../APIs/amazonS3";
 
+// --- Interfaces ---
 export interface Contact {
   _id?: string;
   name?: string;
@@ -37,7 +48,6 @@ interface Remark {
   comment: string;
   commentedBy?: string;
   fileLink?: string;
-  file?: File;
   createdAt?: Date | string;
 }
 
@@ -49,24 +59,17 @@ interface ContactForm {
   contact_list_id: string;
   lead_utm: any;
   status: string;
-  newRemark?: string;
-  newRemarkFile?: File;
   lead_type?: string;
   lead_status?: string;
 }
 
+// --- Helpers ---
 const getLeadColor = (lead: string | undefined): string => {
-  const colors = {
-    cold: "#ef4444           ",
-    warm: "#fde047",
-    hot: "#22c55e",
-  };
+  const colors = { cold: "#ef4444", warm: "#fde047", hot: "#22c55e" };
   return colors[lead as keyof typeof colors] || "#737373";
 };
 
-const getLeadStatusColor = (
-  status: "new" | "contacted" | "qualified" | "lost" | "converted" | undefined
-): string => {
+const getLeadStatusColor = (status: string | undefined): string => {
   const colors = {
     new: "#22c55e",
     contacted: "#fcd34d",
@@ -87,15 +90,24 @@ const convertFileToBase64 = (file: File): Promise<string> => {
 };
 
 const ContactScreen: React.FC = () => {
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  // Lists
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactLists, setContactLists] = useState<ContactList[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [refetch, setRefetch] = useState(false);
-  const [editingRemarks, setEditingRemarks] = useState<Remark[]>([]);
 
+  // UI States
+  const [loading, setLoading] = useState(false);
+  const [remarkLoading, setRemarkLoading] = useState(false);
+  const [refetch, setRefetch] = useState(false);
+
+  // Modals
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+
+  // Selection
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+  // Form States
   const [form, setForm] = useState<ContactForm>({
     name: "",
     email: "",
@@ -104,10 +116,12 @@ const ContactScreen: React.FC = () => {
     contact_list_id: "",
     lead_utm: {},
     status: "active",
-    newRemark: "",
-    lead_type: "",
-    lead_status: "",
+    lead_type: "cold",
+    lead_status: "new",
   });
+
+  const [newRemarkComment, setNewRemarkComment] = useState("");
+  const [newRemarkFile, setNewRemarkFile] = useState<File | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -118,8 +132,7 @@ const ContactScreen: React.FC = () => {
       setContacts(contactsRes);
       setContactLists(contactListRes);
     } catch (err) {
-      console.error("Error loading data", err);
-      toast.error("Failed to load contacts");
+      toast.error("Failed to load data");
     }
   }, []);
 
@@ -127,130 +140,74 @@ const ContactScreen: React.FC = () => {
     fetchData();
   }, [fetchData, refetch]);
 
-  const deleteEntry = async (id: string) => {
-    try {
-      await deactivateContact(id);
-      setRefetch(!refetch);
-    } catch (err) {
-      console.log(err);
+  // --- Handlers ---
+  const openEditModal = (contact?: Contact) => {
+    if (contact) {
+      setForm({
+        name: contact.name || "",
+        email: contact.email || "",
+        phone: contact.phone || "",
+        other_data: contact.other_data || {},
+        contact_list_id:
+          typeof contact.contact_list_id === "object"
+            ? contact.contact_list_id?._id
+            : contact.contact_list_id,
+        lead_utm: contact.lead_utm || {},
+        status: contact.status || "active",
+        lead_type: contact.lead_type,
+        lead_status: contact.lead_status,
+      });
+      setEditingId(contact._id || null);
+    } else {
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        other_data: {},
+        contact_list_id: "",
+        lead_utm: {},
+        status: "active",
+        lead_type: "cold",
+        lead_status: "new",
+      });
+      setEditingId(null);
     }
+    setShowEditModal(true);
   };
-  const resetForm = useCallback(() => {
-    setForm({
-      name: "",
-      email: "",
-      phone: "",
-      other_data: {},
-      contact_list_id: "",
-      lead_utm: {},
-      status: "active",
-      newRemark: "",
-      lead_status: "",
-      lead_type: "",
-    });
-    setEditingId(null);
-  }, []);
 
-  const openCreateModal = useCallback(() => {
-    resetForm();
-    setShowModal(true);
-  }, [resetForm]);
+  const openRemarksModal = (contact: Contact) => {
+    setSelectedContact(contact);
+    setNewRemarkComment("");
+    setNewRemarkFile(null);
+    setShowRemarksModal(true);
+  };
 
-  const openEditModal = useCallback((contact: Contact) => {
-    setForm({
-      name: contact.name || "",
-      email: contact.email || "",
-      phone: contact.phone || "",
-      other_data: contact.other_data || {},
-      contact_list_id:
-        typeof contact.contact_list_id === "object"
-          ? contact.contact_list_id?._id || ""
-          : contact.contact_list_id || "",
-      lead_utm: contact.lead_utm || {},
-      status: contact.status || "active",
-      newRemark: "",
-      lead_status: "",
-      lead_type: "",
-    });
-    setEditingRemarks(contact.remarks || []);
-    setEditingId(contact._id || null);
-    setShowModal(true);
-  }, []);
-
-  const handleSave = async () => {
-    if (!form.email) {
-      toast.error("Email is required");
-      return;
-    }
-
+  const handleSaveContact = async () => {
+    if (!form.email) return toast.error("Email is required");
     try {
       setLoading(true);
-
-      let payload: any = {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        other_data: form.other_data,
-        contact_list_id: form.contact_list_id,
-        lead_utm: form.lead_utm,
-        status: form.status,
-      };
-
       if (editingId) {
-        let allRemarks = [...editingRemarks];
-
-        if (form.newRemark || form.newRemarkFile) {
-          let fileLink = "";
-
-          if (form.newRemarkFile) {
-            const base64 = await convertFileToBase64(form.newRemarkFile);
-            const uploaded = await createAmazonS3({
-              fileName: `remarks/${Date.now()}_${form.newRemarkFile.name}`,
-              fileContent: base64,
-            });
-            fileLink = uploaded.url;
-          }
-
-          const newRemark: Remark = {
-            comment: form.newRemark || "",
-            fileLink,
-            createdAt: new Date().toISOString(),
-          };
-
-          allRemarks.push(newRemark);
-        }
-
-        payload.remarks = allRemarks;
-      }
-
-      if (editingId) {
-        await updateContact(editingId, payload);
-        toast.success("Contact updated successfully");
+        await updateContact(editingId, form);
+        toast.success("Contact updated");
       } else {
-        await createContact(payload);
-        toast.success("Contact created successfully");
+        await createContact(form);
+        toast.success("Contact created");
       }
-
-      setShowModal(false);
-      resetForm();
-      setEditingRemarks([]);
-      fetchData();
+      setShowEditModal(false);
+      setRefetch(!refetch);
     } catch (err) {
-      toast.error("Failed to save contact");
-      console.error(err);
+      toast.error("Save failed");
     } finally {
       setLoading(false);
     }
   };
-
   const handleLeadTypeChange = async (contactId: string, value: string) => {
     try {
       await updateContact(contactId, { lead_type: value });
       setRefetch(!refetch);
       toast.success("Lead type updated");
     } catch (err) {
-      toast.error("Failed to update lead type");
-      console.error(err);
+      toast.error("Update failed");
     }
   };
 
@@ -260,8 +217,39 @@ const ContactScreen: React.FC = () => {
       setRefetch(!refetch);
       toast.success("Lead status updated");
     } catch (err) {
-      toast.error("Failed to update lead status");
-      console.error(err);
+      toast.error("Update failed");
+    }
+  };
+  const handleAddRemark = async () => {
+    if (!newRemarkComment && !newRemarkFile)
+      return toast.error("Remark cannot be empty");
+    if (!selectedContact?._id) return;
+
+    try {
+      setRemarkLoading(true);
+      let fileLink = "";
+
+      if (newRemarkFile) {
+        const base64 = await convertFileToBase64(newRemarkFile);
+        const uploaded = await createAmazonS3({
+          fileName: `remarks/${Date.now()}_${newRemarkFile.name}`,
+          fileContent: base64,
+        });
+        fileLink = uploaded.url;
+      }
+
+      await addRemarkToContact(selectedContact._id, {
+        comment: newRemarkComment,
+        fileLink,
+      });
+
+      toast.success("Remark added");
+      setRefetch(!refetch);
+      setShowRemarksModal(false);
+    } catch (err) {
+      toast.error("Failed to add remark");
+    } finally {
+      setRemarkLoading(false);
     }
   };
 
@@ -277,64 +265,66 @@ const ContactScreen: React.FC = () => {
           <div
             style={{
               fontWeight: "600",
-              marginBottom: "6px",
-              fontSize: "15px",
-              textDecoration: "underline",
+              marginBottom: "4px",
+              fontSize: "14px",
               color: "blue",
+              textDecoration: "underline",
             }}
           >
             {row.name || "—"}
           </div>
-          <div style={{ fontSize: "13px", color: "#555", marginBottom: "4px" }}>
+          <div style={{ fontSize: "12px", color: "#555" }}>
             📧 {row.email || "-"}
           </div>
-          <div style={{ fontSize: "13px", color: "#888", marginBottom: "8px" }}>
-            ⏰ {row.createdAt?.split("T")[0] || "-"}
+          <div style={{ fontSize: "11px", color: "#888" }}>
+            ⏰ {row.createdAt?.split("T")[0]}
           </div>
-          <div style={{ marginTop: "8px", display: "flex", gap: "8px" }}>
-            <span
-              style={{
-                fontSize: "11px",
-                padding: "4px 10px",
-                backgroundColor: `${getLeadColor(row.lead_type)}`,
-                borderRadius: "5px",
-                color: "#fff",
-                textTransform: "capitalize",
-              }}
-            >
-              {row.lead_type || "N/A"}
-            </span>
-            <span
-              style={{
-                fontSize: "11px",
-                padding: "4px 10px",
-                backgroundColor: getLeadStatusColor(row.lead_status),
-                color: "#fff",
-                textTransform: "capitalize",
-                borderRadius: "5px",
-              }}
-            >
-              {row.lead_status || "N/A"}
-            </span>
-          </div>
+          <span
+            style={{
+              fontSize: "11px",
+
+              padding: "4px 10px",
+
+              backgroundColor: `${getLeadColor(row.lead_type)}`,
+
+              borderRadius: "5px",
+
+              color: "#fff",
+
+              textTransform: "capitalize",
+            }}
+          >
+            {row.lead_type || "N/A"}
+          </span>
+
+          <span
+            style={{
+              fontSize: "11px",
+
+              padding: "4px 10px",
+
+              backgroundColor: getLeadStatusColor(row.lead_status),
+
+              color: "#fff",
+
+              textTransform: "capitalize",
+
+              borderRadius: "5px",
+            }}
+          >
+            {row.lead_status || "N/A"}
+          </span>
         </div>
       ),
       sortable: true,
-      width: "250px",
+      width: "200px",
     },
     {
       name: "Phone",
       selector: (row: Contact) => row.phone || "",
       cell: (row: Contact) => (
         <div>
-          <div
-            style={{
-              marginBottom: "6px",
-              fontSize: "14px",
-              fontWeight: "600",
-              color: "#0066cc",
-            }}
-          >
+          <div style={{ fontSize: "13px", fontWeight: "600" }}>
             {row.phone || "-"}
           </div>
           {row.phone && (
@@ -343,13 +333,9 @@ const ContactScreen: React.FC = () => {
               target="_blank"
               rel="noreferrer"
               style={{
-                fontSize: "13px",
+                fontSize: "11px",
                 color: "#25D366",
-                fontWeight: "600",
                 textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
               }}
             >
               💬 WhatsApp
@@ -357,112 +343,84 @@ const ContactScreen: React.FC = () => {
           )}
         </div>
       ),
-      width: "150px",
+      width: "140px",
     },
     {
       name: "Other Data",
-      cell: (row: Contact) =>
-        row.other_data ? (
-          <div style={{ fontSize: "13px" }}>
-            {Object.entries(row.other_data)
-              .filter(([key, value]) => key !== "created_time" && value)
-              .reverse()
-              .map(([key, value]) => {
-                if (value === "shopify") {
-                  return (
-                    <Badge
-                      key={key}
-                      bg="success"
-                      style={{
-                        marginRight: "4px",
-                        fontSize: "11px",
-                        padding: "4px 8px",
-                      }}
-                    >
-                      Shopify
-                    </Badge>
-                  );
-                }
-                return (
-                  <div key={key} style={{ marginBottom: "4px" }}>
-                    {value as string}
+      cell: (row: Contact) => (
+        <div style={{ fontSize: "12px" }}>
+          {row.other_data
+            ? Object.entries(row.other_data)
+                .filter(([key, value]) => key !== "created_time" && value)
+                .map(([key, value]) => (
+                  <div key={key}>
+                    {value === "shopify" ? (
+                      <Badge bg="success">Shopify</Badge>
+                    ) : (
+                      String(value)
+                    )}
                   </div>
-                );
-              })}
-          </div>
-        ) : (
-          "-"
-        ),
-      width: "150px",
+                ))
+            : "—"}
+        </div>
+      ),
+      width: "130px",
     },
     {
       name: "Last Remark",
       cell: (row: Contact) => {
-        const lastRemark = row.remarks?.[row.remarks.length - 1];
-        return (
-          <div style={{ fontSize: "13px" }}>
-            {lastRemark ? (
-              <>
-                <div style={{ marginBottom: "6px", lineHeight: "1.4" }}>
-                  {lastRemark.comment.substring(0, 50)}
-                  {lastRemark.comment.length > 50 ? "..." : ""}
-                </div>
-                {lastRemark.fileLink && (
-                  <a
-                    href={lastRemark.fileLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ fontSize: "12px", fontWeight: "600" }}
-                  >
-                    📎 View File
-                  </a>
-                )}
-              </>
-            ) : (
-              "-"
+        const last = row.remarks?.[row.remarks.length - 1];
+        return last ? (
+          <div style={{ fontSize: "12px" }}>
+            <div className="text-truncate" style={{ maxWidth: "150px" }}>
+              {last.comment}
+            </div>
+            {last.fileLink && (
+              <a
+                href={last.fileLink}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: "10px" }}
+              >
+                📎 View
+              </a>
             )}
           </div>
+        ) : (
+          <span className="text-muted">—</span>
         );
       },
-      width: "200px",
+      width: "180px",
     },
     {
       name: "UTM",
       cell: (row: Contact) => (
-        <div style={{ fontSize: "12px" }}>
-          <div
-            style={{ fontWeight: "600", marginBottom: "6px", fontSize: "13px" }}
-          >
-            {row.contact_list_id?.name || "-"}
+        <div style={{ fontSize: "11px" }}>
+          <div style={{ fontWeight: "600" }}>
+            {row.contact_list_id?.name || "No List"}
           </div>
           {row.lead_utm &&
             Object.entries(row.lead_utm)
               .filter(([_, v]) => v)
+              .slice(0, 2)
               .map(([k, v]) => (
-                <div key={k} style={{ marginBottom: "3px" }}>
-                  <strong>{k}:</strong> {v}
+                <div key={k}>
+                  <strong>{k}:</strong> {String(v)}
                 </div>
               ))}
         </div>
       ),
-      width: "180px",
+      width: "150px",
     },
     {
       name: "Actions",
       cell: (row: Contact) => (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            padding: "10px 0",
-          }}
-        >
+        <div className="d-flex flex-column gap-2 py-2">
           <Form.Select
             size="sm"
             value={row.lead_type || ""}
             onChange={(e) => handleLeadTypeChange(row._id!, e.target.value)}
-            style={{ fontSize: "13px", fontWeight: "500" }}
+            style={{ fontSize: "11px" }}
           >
             <option value="cold">Cold</option>
             <option value="warm">Warm</option>
@@ -472,7 +430,7 @@ const ContactScreen: React.FC = () => {
             size="sm"
             value={row.lead_status || ""}
             onChange={(e) => handleLeadStatusChange(row._id!, e.target.value)}
-            style={{ fontSize: "13px", fontWeight: "500" }}
+            style={{ fontSize: "11px" }}
           >
             <option value="new">New</option>
             <option value="contacted">Contacted</option>
@@ -480,27 +438,37 @@ const ContactScreen: React.FC = () => {
             <option value="converted">Converted</option>
             <option value="lost">Lost</option>
           </Form.Select>
-          <button onClick={() => deleteEntry(row._id || "")}>
-            Delete Entry
-          </button>
+          <div className="d-flex gap-2">
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => openRemarksModal(row)}
+              style={{ fontSize: "10px" }}
+            >
+              Remarks ({row.remarks?.length || 0})
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => {
+                if (window.confirm("Delete?")) deactivateContact(row._id!);
+              }}
+              style={{ fontSize: "10px" }}
+            >
+              Del
+            </Button>
+          </div>
         </div>
       ),
-      width: "150px",
+      width: "180px",
     },
   ];
 
   return (
-    <div style={{ padding: "20px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-        }}
-      >
-        <h2>Contacts</h2>
-        <Button onClick={openCreateModal}>Add Contact</Button>
+    <div className="p-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h3>Contact Database</h3>
+        <Button onClick={() => openEditModal()}>+ Add New Contact</Button>
       </div>
 
       <DataTable
@@ -508,15 +476,18 @@ const ContactScreen: React.FC = () => {
         data={contacts}
         pagination
         highlightOnHover
-        striped
+        responsive
       />
 
-      {/* Edit/Create Contact Modal */}
-
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+      {/* --- Edit/Create Contact Modal --- */}
+      <Modal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        size="lg"
+      >
         <Modal.Header closeButton>
           <Modal.Title>
-            {editingId ? "Edit Contact" : "Add Contact"}
+            {editingId ? "Edit Details" : "New Contact"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -528,30 +499,22 @@ const ContactScreen: React.FC = () => {
                   <Form.Control
                     type="text"
                     value={form.name}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, name: e.target.value }))
-                    }
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>
-                    Email <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
+                  <Form.Label>Email*</Form.Label>
                   <Form.Control
                     type="email"
                     value={form.email}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, email: e.target.value }))
+                      setForm({ ...form, email: e.target.value })
                     }
-                    required
                   />
                 </Form.Group>
               </Col>
-            </Row>
-
-            <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Phone</Form.Label>
@@ -559,24 +522,21 @@ const ContactScreen: React.FC = () => {
                     type="text"
                     value={form.phone}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, phone: e.target.value }))
+                      setForm({ ...form, phone: e.target.value })
                     }
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Contact List</Form.Label>
+                  <Form.Label>Source List</Form.Label>
                   <Form.Select
                     value={form.contact_list_id}
                     onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        contact_list_id: e.target.value,
-                      }))
+                      setForm({ ...form, contact_list_id: e.target.value })
                     }
                   >
-                    <option value="">Select</option>
+                    <option value="">Select List</option>
                     {contactLists.map((cl) => (
                       <option key={cl._id} value={cl._id}>
                         {cl.name}
@@ -586,255 +546,115 @@ const ContactScreen: React.FC = () => {
                 </Form.Group>
               </Col>
             </Row>
-            {!editingId && (
-              <Row className="mt-3">
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>Lead Type</Form.Label>
-                    <Form.Select
-                      value={form.lead_type || "cold"}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          lead_type: e.target.value as Contact["lead_type"],
-                        })
-                      }
-                    >
-                      <option value="cold">Cold</option>
-                      <option value="warm">Warm</option>
-                      <option value="hot">Hot</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>Lead Status</Form.Label>
-                    <Form.Select
-                      value={form.lead_status || "new"}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          lead_status: e.target.value as Contact["lead_status"],
-                        }))
-                      }
-                    >
-                      <option value="new">New</option>
-                      <option value="contacted">Contacted</option>
-                      <option value="qualified">Qualified</option>
-                      <option value="lost">Lost</option>
-                      <option value="converted">Converted</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
-            )}
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="light" onClick={() => setShowEditModal(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveContact} disabled={loading}>
+            {loading ? <Spinner size="sm" /> : "Save Changes"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-            {editingId && (
-              <>
-                <hr />
+      {/* --- Atomic Remarks Modal --- */}
+      <Modal
+        show={showRemarksModal}
+        onHide={() => setShowRemarksModal(false)}
+        centered
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Timeline: {selectedContact?.name || selectedContact?.email}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ backgroundColor: "#fbfbfb" }}>
+          {/* Form to Push New Remark */}
+          <Card className="border-primary mb-4">
+            <Card.Body>
+              <Form.Group className="mb-2">
+                <Form.Label className="small fw-bold">Add Update</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  placeholder="What's the status?"
+                  value={newRemarkComment}
+                  onChange={(e) => setNewRemarkComment(e.target.value)}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="file"
+                  size="sm"
+                  onChange={(e: any) => setNewRemarkFile(e.target.files[0])}
+                />
+              </Form.Group>
+              <Button
+                className="w-100"
+                onClick={handleAddRemark}
+                disabled={remarkLoading}
+              >
+                {remarkLoading ? <Spinner size="sm" /> : "Post Remark"}
+              </Button>
+            </Card.Body>
+          </Card>
 
-                {/* 1. Show Latest Remark Only */}
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h6 className="mb-0">Latest Remark</h6>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => setShowHistoryModal(true)}
-                  >
-                    View All History ({editingRemarks.length})
-                  </Button>
-                </div>
-
-                {editingRemarks.length > 0 ? (
+          <h6 className="mb-3">History</h6>
+          <div
+            style={{
+              maxHeight: "350px",
+              overflowY: "auto",
+              paddingRight: "5px",
+            }}
+          >
+            {!selectedContact?.remarks ||
+            selectedContact.remarks.length === 0 ? (
+              <div className="text-center py-4 text-muted">
+                No history found.
+              </div>
+            ) : (
+              selectedContact.remarks
+                .slice()
+                .reverse()
+                .map((r, i) => (
                   <div
-                    style={{
-                      padding: "10px",
-                      border: "1px solid #eee",
-                      borderRadius: "6px",
-                      backgroundColor: "#fcfcfc",
-                      marginBottom: "20px",
-                    }}
+                    key={i}
+                    className="bg-white border p-3 rounded mb-2 shadow-sm"
                   >
-                    <small className="text-muted d-block mb-1">
-                      {editingRemarks[0].createdAt
-                        ? new Date(editingRemarks[0].createdAt).toLocaleString()
-                        : ""}
-                    </small>
-                    <p className="mb-1" style={{ fontSize: "14px" }}>
-                      {editingRemarks[0].comment}
+                    <div className="d-flex justify-content-between align-items-start mb-1">
+                      <small className="text-primary fw-bold">Log Entry</small>
+                      <small
+                        className="text-muted"
+                        style={{ fontSize: "11px" }}
+                      >
+                        {r.createdAt
+                          ? new Date(r.createdAt).toLocaleString()
+                          : "Just now"}
+                      </small>
+                    </div>
+                    <p
+                      className="mb-1"
+                      style={{ fontSize: "14px", whiteSpace: "pre-wrap" }}
+                    >
+                      {r.comment}
                     </p>
-                    {editingRemarks[0].fileLink && (
+                    {r.fileLink && (
                       <a
-                        href={editingRemarks[0].fileLink}
+                        href={r.fileLink}
                         target="_blank"
                         rel="noreferrer"
-                        style={{ fontSize: "12px" }}
+                        className="text-decoration-none small"
                       >
                         📎 View Attachment
                       </a>
                     )}
                   </div>
-                ) : (
-                  <p className="text-muted small">No remarks found.</p>
-                )}
-
-                {/* 2. Add New Remark Section */}
-                <div
-                  style={{
-                    padding: "12px",
-                    border: "2px dashed #0d6efd",
-                    borderRadius: "6px",
-                    backgroundColor: "#f0f8ff",
-                  }}
-                >
-                  <h6 style={{ marginBottom: "10px", color: "#0d6efd" }}>
-                    Add New Remark
-                  </h6>
-                  <Row>
-                    <Col md={12}>
-                      <Form.Group className="mb-2">
-                        <Form.Control
-                          as="textarea"
-                          rows={2}
-                          placeholder="Type your new remark here..."
-                          value={form.newRemark || ""}
-                          onChange={(e) =>
-                            setForm((f) => ({
-                              ...f,
-                              newRemark: e.target.value,
-                            }))
-                          }
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={12}>
-                      <Form.Control
-                        type="file"
-                        size="sm"
-                        onChange={(e: any) => {
-                          if (e.target.files?.[0]) {
-                            setForm((f) => ({
-                              ...f,
-                              newRemarkFile: e.target.files[0],
-                            }));
-                          }
-                        }}
-                      />
-                    </Col>
-                  </Row>
-                </div>
-              </>
+                ))
             )}
-          </Form>
+          </div>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSave} disabled={loading}>
-            {loading ? <Spinner animation="border" size="sm" /> : "Save"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      {/* --- History Popup Modal --- */}
-      <Modal
-        show={showHistoryModal}
-        onHide={() => setShowHistoryModal(false)}
-        size="lg"
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Remarks History</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
-          {editingRemarks.length === 0 ? (
-            <p className="text-center py-4">No remarks recorded yet.</p>
-          ) : (
-            editingRemarks.map((remark, idx) => (
-              <div
-                key={idx}
-                style={{
-                  padding: "12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  marginBottom: "12px",
-                  backgroundColor: "#f9f9f9",
-                }}
-              >
-                <div className="d-flex justify-content-between mb-2">
-                  <small className="text-muted">
-                    {remark.createdAt
-                      ? new Date(remark.createdAt).toUTCString()
-                      : "New Remark"}
-                  </small>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    style={{ fontSize: "10px", padding: "2px 5px" }}
-                    onClick={() => {
-                      const updated = editingRemarks.filter(
-                        (_, i) => i !== idx
-                      );
-                      setEditingRemarks(updated);
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-
-                <Form.Group className="mb-2">
-                  <Form.Control
-                    as="textarea"
-                    rows={2}
-                    value={remark.comment}
-                    onChange={(e) => {
-                      const updated = [...editingRemarks];
-                      updated[idx].comment = e.target.value;
-                      setEditingRemarks(updated);
-                    }}
-                  />
-                </Form.Group>
-
-                {remark.fileLink && (
-                  <div className="mb-2">
-                    <a
-                      href={remark.fileLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ fontSize: "13px" }}
-                    >
-                      📎 View Current Attachment
-                    </a>
-                  </div>
-                )}
-
-                <Form.Control
-                  type="file"
-                  size="sm"
-                  onChange={async (e: any) => {
-                    if (e.target.files?.[0]) {
-                      const file = e.target.files[0];
-                      const base64 = await convertFileToBase64(file);
-                      const uploaded = await createAmazonS3({
-                        fileName: `remarks/${Date.now()}_${file.name}`,
-                        fileContent: base64,
-                      });
-                      const updated = [...editingRemarks];
-                      updated[idx].fileLink = uploaded.url;
-                      setEditingRemarks(updated);
-                      toast.success("File replaced");
-                    }
-                  }}
-                />
-              </div>
-            ))
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="primary" onClick={() => setShowHistoryModal(false)}>
-            Done
-          </Button>
-        </Modal.Footer>
       </Modal>
     </div>
   );

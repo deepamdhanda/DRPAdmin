@@ -1,12 +1,13 @@
 import { Modal, Button, Form, Badge } from "react-bootstrap";
 import { useState, useEffect } from "react";
-import type { KycVerification } from "../screens/Dashboard/kyc-verification.screen";
+
 import { updateKyc } from "../APIs/kyc-verification";
+import type { Pool } from "../screens/Dashboard/kyc-verification.screen";
 
 type Props = {
   show: boolean;
   onHide: () => void;
-  pool: KycVerification;
+  pool: Pool;
   onUpdated?: () => void;
 };
 

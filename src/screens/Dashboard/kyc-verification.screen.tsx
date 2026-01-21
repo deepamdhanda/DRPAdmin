@@ -7,7 +7,7 @@ import { useCallback } from "react";
 
 import { Stack } from "react-bootstrap";
 
-import EditPoolModal from "../../utils/EditPoolModal"; // New Component
+import EditPoolModal from "../../utils/EditPoolModal";
 import AddBalanceModal from "../../utils/AddBalanceModal";
 
 export interface User {
@@ -54,9 +54,11 @@ export type Pool = {
   state?: string;
   kyc_status: string;
   comment: string;
+  commission: {
+    value: number;
+    type: "fixed" | "percentage";
+  };
 };
-
-// ... (Keep your User, Owner, and Pool types as they are)
 
 const PoolComponent = () => {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
@@ -153,13 +155,18 @@ const PoolComponent = () => {
       name: "Action",
       cell: (row) => (
         <Stack direction="horizontal" gap={2}>
-          <Button
-            variant="outline-primary"
-            size="sm"
-            onClick={() => handleViewKyc(row)}
-          >
-            View
-          </Button>
+          {row.kyc_documents.length > 0 ? (
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={() => handleViewKyc(row)}
+            >
+              View
+            </Button>
+          ) : (
+            ""
+          )}
+
           <Button
             variant="outline-success" // Different color for clarity
             size="sm"

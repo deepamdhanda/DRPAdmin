@@ -16,6 +16,7 @@ interface RechargeRecord {
   amount: number;
   payment_method: string;
   status: string;
+  reason?: string; // Added reason to interface
   createdAt: string;
 }
 
@@ -35,15 +36,14 @@ const AddBalanceModal: React.FC<AddBalanceModalProps> = ({
   onSuccess,
 }) => {
   const [amount, setAmount] = useState<number | string>("");
+  const [reason, setReason] = useState(""); // New state for reason
   const [history, setHistory] = useState<RechargeRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingHistory, setFetchingHistory] = useState(false);
 
-  // 1. Fetch History Function
   const fetchHistory = useCallback(async () => {
     setFetchingHistory(true);
     try {
-      // Adjust this endpoint to wherever you fetch Wallet_Recharge records by pool_id
       const response = await appAxios.get(`${kyc_verification_url}/${poolId}`);
       setHistory(response.data.data);
     } catch (error) {
@@ -53,26 +53,28 @@ const AddBalanceModal: React.FC<AddBalanceModalProps> = ({
     }
   }, [poolId]);
 
-  // Fetch history when modal opens
   useEffect(() => {
     if (show) {
       fetchHistory();
     }
   }, [show, fetchHistory]);
 
-  // 2. Handle Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) return;
 
     setLoading(true);
     try {
+      // Included reason in the payload
       await appAxios.post(`${kyc_verification_url}/${poolId}`, {
         amount: Number(amount),
+        reason: reason.trim(),
       });
+
       setAmount("");
-      fetchHistory(); // Refresh history list
-      onSuccess(); // Refresh parent table balance
+      setReason(""); // Reset reason
+      fetchHistory();
+      onSuccess();
     } catch (error: any) {
       alert(error.response?.data?.message || "Update failed");
     } finally {
@@ -90,19 +92,39 @@ const AddBalanceModal: React.FC<AddBalanceModalProps> = ({
         {/* --- Top Section: Add Balance Form --- */}
         <Form onSubmit={handleSubmit} className="mb-4 p-3 bg-light rounded">
           <Form.Label className="fw-bold">Add New Balance (Admin)</Form.Label>
-          <InputGroup>
-            <InputGroup.Text>₹</InputGroup.Text>
-            <Form.Control
-              type="number"
-              placeholder="Enter amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-            />
-            <Button variant="success" type="submit" disabled={loading}>
-              {loading ? <Spinner size="sm" /> : "Add Cash"}
+          <div className="d-flex flex-column gap-3">
+            <InputGroup>
+              <InputGroup.Text>₹</InputGroup.Text>
+              <Form.Control
+                type="number"
+                placeholder="Enter amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
+            </InputGroup>
+
+            {/* Added Reason Input Field */}
+            <Form.Group>
+              <Form.Control
+                type="text"
+                placeholder="Enter reason for adjustment (e.g., Refund, Correction, Promotional)"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                required={true} // Set to true if you want to force admins to provide a reason
+              />
+            </Form.Group>
+
+            <Button
+              variant="success"
+              type="submit"
+              disabled={loading}
+              className="w-100"
+            >
+              {loading ? <Spinner size="sm" className="me-2" /> : null}
+              Add Cash
             </Button>
-          </InputGroup>
+          </div>
         </Form>
 
         <hr />
@@ -111,18 +133,20 @@ const AddBalanceModal: React.FC<AddBalanceModalProps> = ({
         <h6 className="mb-3 fw-bold">Recent Recharge History</h6>
         <div style={{ maxHeight: "300px", overflowY: "auto" }}>
           <Table striped bordered hover responsive size="sm">
-            <thead className="sticky-top bg-white">
+            <thead className="sticky-top bg-white shadow-sm">
               <tr>
                 <th>Date</th>
                 <th>Amount</th>
                 <th>Method</th>
+                <th>Reason</th> {/* New Table Header */}
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {fetchingHistory ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-3">
+                  <td colSpan={5} className="text-center py-3">
+                    <Spinner size="sm" animation="border" className="me-2" />{" "}
                     Loading history...
                   </td>
                 </tr>
@@ -135,6 +159,12 @@ const AddBalanceModal: React.FC<AddBalanceModalProps> = ({
                     </td>
                     <td>
                       <Badge bg="info text-dark">{item.payment_method}</Badge>
+                    </td>
+                    {/* Display the Reason */}
+                    <td className="text-muted small">
+                      {item.reason || (
+                        <span className="fst-italic">No reason provided</span>
+                      )}
                     </td>
                     <td>
                       <Badge
@@ -149,7 +179,7 @@ const AddBalanceModal: React.FC<AddBalanceModalProps> = ({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="text-center text-muted">
+                  <td colSpan={5} className="text-center text-muted">
                     No history found.
                   </td>
                 </tr>

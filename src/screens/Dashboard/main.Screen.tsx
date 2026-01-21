@@ -11,7 +11,7 @@ const menuItems = [
   { name: "Outgoing Remittance", icon: "💸", path: "/outgoingRemittance" },
   { name: "Incoming Remittance", icon: "💸", path: "/incomingRemittance" },
   { name: "Invoice", icon: "💸", path: "/invoice" },
-  { name: "Kyc Verification", path: "/kyc-verification", icon: "👱🏼‍♂️" },
+  { name: "Edit Pool", path: "/kyc-verification", icon: "🎱" },
   {
     name: "Marketing",
     icon: "",
@@ -160,7 +160,7 @@ const Dashboard: React.FC = () => {
     const currentPath = location.pathname;
     const currentSubPath = currentPath.split("dashboard")[1]; // e.g., "/automation/create"
     const matchedLink = findMatchedLink(menuItems, currentSubPath);
-    console.log(currentPath.split("dashboard")[1], "B");
+
     if (matchedLink) {
       console.log(currentPath, "A", currentPath.split("dashboard")[1]);
       setActiveLink(matchedLink.path);

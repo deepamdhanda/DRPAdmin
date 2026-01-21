@@ -8,10 +8,10 @@ import {
   Col,
   Tab,
   Tabs,
+  InputGroup,
 } from "react-bootstrap";
 import { updatePool } from "../APIs/kyc-verification";
 
-// Re-defining parts of the Pool type for local safety
 interface EditPoolModalProps {
   show: boolean;
   onHide: () => void;
@@ -28,7 +28,6 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
-  // Initialize state with all possible fields
   const [formData, setFormData] = useState({
     name: "",
     status: "",
@@ -39,6 +38,11 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
     gstin: "",
     address: "",
     state: "",
+    // Added Commission State
+    commission: {
+      value: 0,
+      type: "fixed",
+    },
     owner: {
       full_name: "",
       email: "",
@@ -48,12 +52,9 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
       account_number: "",
       ifsc: "",
       holder_name: "",
-      // Files (cheque) usually require FormData handling,
-      // keeping strictly text/data editing for this example
     },
   });
 
-  // Populate form when pool data changes
   useEffect(() => {
     if (pool) {
       setFormData({
@@ -66,6 +67,11 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
         gstin: pool.gstin || "",
         address: pool.address || "",
         state: pool.state || "",
+        // Populate Commission from Pool Props
+        commission: {
+          value: pool.commission?.value ?? 0,
+          type: pool.commission?.type || "fixed",
+        },
         owner: {
           full_name: pool.owner?.full_name || "",
           email: pool.owner?.email || "",
@@ -80,7 +86,6 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
     }
   }, [pool]);
 
-  // Generic handler for top-level fields
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -90,7 +95,19 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handler for nested objects (owner, bank_details)
+  const handleCommissionChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      commission: {
+        ...prev.commission,
+        [name]: name === "value" ? parseFloat(value) || 0 : value,
+      },
+    }));
+  };
+
   const handleNestedChange = (
     section: "owner" | "bank_details",
     e: React.ChangeEvent<HTMLInputElement>
@@ -109,8 +126,6 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
     e.preventDefault();
     setLoading(true);
     try {
-      // NOTE: If you are uploading files (logo/cheque), you must use FormData instead of JSON.
-      // Currently sending JSON as per your request structure.
       await updatePool(pool._id, formData);
       onSuccess();
       onHide();
@@ -133,7 +148,6 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
             onSelect={(k) => setActiveTab(k || "general")}
             className="mb-3"
           >
-            {/* --- TAB 1: GENERAL INFO --- */}
             <Tab eventKey="general" title="General Info">
               <Row>
                 <Col md={6}>
@@ -155,28 +169,6 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
                       type="text"
                       name="company_type"
                       value={formData.company_type}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Website</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Wallet Balance</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="wallet_balance"
-                      value={formData.wallet_balance}
                       onChange={handleChange}
                     />
                   </Form.Group>
@@ -212,8 +204,92 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
               </Row>
             </Tab>
 
-            {/* --- TAB 2: OWNER INFO --- */}
+            {/* --- NEW TAB: COMMISSION SETTINGS --- */}
+            <Tab eventKey="commission" title="Commission">
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Commission Type</Form.Label>
+                    <Form.Select
+                      name="type"
+                      value={formData.commission.type}
+                      onChange={handleCommissionChange}
+                    >
+                      <option value="fixed">Fixed (Flat Amount)</option>
+                      <option value="percentage">Percentage (%)</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Commission Value</Form.Label>
+                    <InputGroup>
+                      {formData.commission.type === "fixed" && (
+                        <InputGroup.Text>₹</InputGroup.Text>
+                      )}
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="value"
+                        placeholder="0.00"
+                        value={formData.commission.value}
+                        onChange={(e: any) => handleCommissionChange(e)}
+                        required
+                      />
+                      {formData.commission.type === "percentage" && (
+                        <InputGroup.Text>%</InputGroup.Text>
+                      )}
+                    </InputGroup>
+                  </Form.Group>
+                </Col>
+              </Row>
+            </Tab>
+            <Tab eventKey="location" title="Location & Legal">
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>GSTIN</Form.Label>
+
+                    <Form.Control
+                      type="text"
+                      name="gstin"
+                      value={formData.gstin}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>State</Form.Label>
+
+                    <Form.Control
+                      type="text"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+
+                <Col md={12}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Full Address</Form.Label>
+
+                    <Form.Control
+                      as="textarea"
+                      rows={3}
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+            </Tab>
+
             <Tab eventKey="owner" title="Owner Details">
+              {/* Existing Owner Fields */}
               <Row>
                 <Col md={12}>
                   <Form.Group className="mb-3">
@@ -251,48 +327,8 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
               </Row>
             </Tab>
 
-            {/* --- TAB 3: LOCATION & LEGAL --- */}
-            <Tab eventKey="location" title="Location & Legal">
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>GSTIN</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="gstin"
-                      value={formData.gstin}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>State</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Full Address</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-            </Tab>
-
-            {/* --- TAB 4: BANK DETAILS --- */}
             <Tab eventKey="bank" title="Bank Details">
+              {/* Existing Bank Fields */}
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
@@ -343,16 +379,7 @@ const EditPoolModal: React.FC<EditPoolModalProps> = ({
           </Button>
           <Button variant="primary" type="submit" disabled={loading}>
             {loading ? (
-              <>
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                />{" "}
-                Saving...
-              </>
+              <Spinner animation="border" size="sm" />
             ) : (
               "Save Changes"
             )}

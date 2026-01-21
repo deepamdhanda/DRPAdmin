@@ -477,6 +477,7 @@ const ContactScreen: React.FC = () => {
         pagination
         highlightOnHover
         responsive
+        paginationRowsPerPageOptions={[10, 50, 100, 500]}
       />
 
       {/* --- Edit/Create Contact Modal --- */}

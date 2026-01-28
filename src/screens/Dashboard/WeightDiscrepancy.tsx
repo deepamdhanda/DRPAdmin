@@ -1,15 +1,18 @@
 import React, { useState, type ChangeEvent } from "react";
 import Papa from "papaparse";
+import { appAxios } from "../../axios/appAxios";
+import { BASE_URL } from "../../axios/urls";
+import { toast } from "react-toastify";
 
 interface CSVRow {
   [key: string]: string;
 }
 
-// Predefined target fields
+// Target fields updated to match your Model labels for clarity
 const TARGET_FIELDS = [
-  "AWB",
+  "AWB Number",
   "Entered Weight",
-  "Initial Amount Charge",
+  "Initial Amount",
   "Charge Weight",
   "Final Charge",
 ] as const;
@@ -19,14 +22,11 @@ type TargetField = (typeof TARGET_FIELDS)[number];
 const MultiFieldCSVProcessor: React.FC = () => {
   const [rawData, setRawData] = useState<CSVRow[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-
-  // Standard mappings (Single select)
   const [mappings, setMappings] = useState<Record<TargetField, string>>(
     {} as Record<TargetField, string>
   );
-
-  // Multi-select mapping for Courier Images
   const [imageMappings, setImageMappings] = useState<string[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,105 +56,159 @@ const MultiFieldCSVProcessor: React.FC = () => {
     );
   };
 
-  const processAndLogData = () => {
+  const processAndLogData = async () => {
+    if (!mappings["AWB Number"]) {
+      toast.error("Please map the AWB Number field");
+      return;
+    }
+
+    setIsProcessing(true);
+
     const processedData = rawData.map((row) => {
-      const initialAmount =
-        parseFloat(row[mappings["Initial Amount Charge"]]) || 0;
-      const finalCharge = parseFloat(row[mappings["Final Charge"]]) || 0;
-
-      // Extract all selected image columns into one array
-      const courierImages = imageMappings
+      // Map multi-select images
+      const courier_images = imageMappings
         .map((colName) => row[colName])
-        .filter((val) => val && val.trim() !== ""); // Remove empty values
+        .filter((val) => val && val.trim() !== "");
 
+      // Match the Mongoose Model exactly
       return {
-        awb: row[mappings["AWB"]],
-        courierImages: courierImages, // This is now your array of multiple fields
-        enteredWeight: parseFloat(row[mappings["Entered Weight"]]) || 0,
-        initialAmountCharge: initialAmount,
-        chargeWeight: parseFloat(row[mappings["Charge Weight"]]) || 0,
-        finalCharge: finalCharge,
-        ourCharge: Number((finalCharge - initialAmount).toFixed(2)),
+        awb_number: row[mappings["AWB Number"]],
+        entered_weight: parseFloat(row[mappings["Entered Weight"]]) || 0,
+        initial_amount: parseFloat(row[mappings["Initial Amount"]]) || 0,
+        charge_weight: parseFloat(row[mappings["Charge Weight"]]) || 0,
+        final_charge: parseFloat(row[mappings["Final Charge"]]) || 0,
+        courier_images: courier_images,
+        chat: [], // Defaulting to empty array as per model
       };
     });
 
-    console.log("Final Processed Array:", processedData);
-    alert("Data processed! Check the console for the array of objects.");
+    try {
+      // Sending the array of objects to your POST route
+      await appAxios.post(`${BASE_URL}/weight-discrepancy`, processedData);
+      toast.success(`${processedData.length} Discrepancies Created`);
+      setRawData([]); // Clear after success
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to upload data");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "system-ui, sans-serif" }}>
-      <h2>CSV Mapping Tool</h2>
-
-      <div
-        style={{ padding: "15px", background: "#f9f9f9", borderRadius: "8px" }}
+    <div
+      style={{
+        padding: "20px",
+        fontFamily: "system-ui, sans-serif",
+        maxWidth: "1000px",
+        margin: "0 auto",
+      }}
+    >
+      <Card
+        style={{ padding: "20px", boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}
       >
-        <input type="file" accept=".csv" onChange={handleFileUpload} />
-      </div>
+        <h2>Weight Discrepancy CSV Uploader</h2>
+        <p className="text-muted">
+          Map your CSV columns to the database fields below.
+        </p>
 
-      {csvHeaders.length > 0 && (
-        <div style={{ marginTop: "20px", display: "flex", gap: "40px" }}>
-          {/* Standard Fields Section */}
-          <div style={{ flex: 1 }}>
-            <h3>Standard Field Mapping</h3>
-            {TARGET_FIELDS.map((field) => (
-              <div
-                key={field}
+        <div
+          style={{
+            padding: "20px",
+            border: "2px dashed #ccc",
+            borderRadius: "8px",
+            textAlign: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <input type="file" accept=".csv" onChange={handleFileUpload} />
+        </div>
+
+        {csvHeaders.length > 0 && (
+          <div style={{ display: "flex", gap: "40px", flexWrap: "wrap" }}>
+            {/* Standard Fields Section */}
+            <div style={{ flex: "1 1 400px" }}>
+              <h3
                 style={{
-                  marginBottom: "10px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  fontSize: "18px",
+                  borderBottom: "2px solid #eee",
+                  paddingBottom: "10px",
                 }}
               >
-                <label style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  {field}:
-                </label>
-                <select
-                  onChange={(e) => handleMappingChange(field, e.target.value)}
-                  value={mappings[field] || ""}
-                  style={{ width: "200px", padding: "5px" }}
+                Database Field Mapping
+              </h3>
+              {TARGET_FIELDS.map((field) => (
+                <div
+                  key={field}
+                  style={{
+                    marginBottom: "15px",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
                 >
-                  <option value="">-- Select Column --</option>
-                  {csvHeaders.map((header) => (
-                    <option key={header} value={header}>
-                      {header}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
-
-          {/* Multi-Select Image Section */}
-          <div
-            style={{
-              flex: 1,
-              borderLeft: "1px solid #ddd",
-              paddingLeft: "40px",
-            }}
-          >
-            <h3>Courier Images (Select Multiple)</h3>
-            <p style={{ fontSize: "12px", color: "#666" }}>
-              Select all columns that contain image URLs/Paths:
-            </p>
-            <div
-              style={{
-                maxHeight: "200px",
-                overflowY: "auto",
-                border: "1px solid #ddd",
-                padding: "10px",
-                borderRadius: "4px",
-              }}
-            >
-              {csvHeaders.map((header) => (
-                <div key={header} style={{ marginBottom: "5px" }}>
                   <label
                     style={{
-                      cursor: "pointer",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      textTransform: "uppercase",
+                      color: "#555",
+                    }}
+                  >
+                    {field}
+                  </label>
+                  <select
+                    onChange={(e) => handleMappingChange(field, e.target.value)}
+                    value={mappings[field] || ""}
+                    style={{
+                      width: "100%",
+                      padding: "8px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
+                  >
+                    <option value="">-- Select CSV Column --</option>
+                    {csvHeaders.map((header) => (
+                      <option key={header} value={header}>
+                        {header}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            {/* Courier Images Section */}
+            <div
+              style={{
+                flex: "1 1 300px",
+                background: "#fcfcfc",
+                padding: "15px",
+                borderRadius: "8px",
+              }}
+            >
+              <h3 style={{ fontSize: "18px" }}>Courier Images</h3>
+              <p style={{ fontSize: "12px", color: "#666" }}>
+                Select all columns containing proof images.
+              </p>
+              <div
+                style={{
+                  maxHeight: "300px",
+                  overflowY: "auto",
+                  border: "1px solid #eee",
+                  padding: "10px",
+                  background: "#fff",
+                }}
+              >
+                {csvHeaders.map((header) => (
+                  <label
+                    key={header}
+                    style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "8px",
+                      gap: "10px",
+                      padding: "5px 0",
+                      cursor: "pointer",
+                      borderBottom: "1px solid #f9f9f9",
                     }}
                   >
                     <input
@@ -162,34 +216,50 @@ const MultiFieldCSVProcessor: React.FC = () => {
                       checked={imageMappings.includes(header)}
                       onChange={() => toggleImageMapping(header)}
                     />
-                    {header}
+                    <span style={{ fontSize: "14px" }}>{header}</span>
                   </label>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {csvHeaders.length > 0 && (
-        <button
-          onClick={processAndLogData}
-          style={{
-            marginTop: "30px",
-            padding: "12px 24px",
-            backgroundColor: "#000",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "16px",
-          }}
-        >
-          Generate & Log Final Array
-        </button>
-      )}
+        {csvHeaders.length > 0 && (
+          <button
+            onClick={processAndLogData}
+            disabled={isProcessing}
+            style={{
+              marginTop: "30px",
+              width: "100%",
+              padding: "15px",
+              backgroundColor: isProcessing ? "#666" : "#007bff",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: isProcessing ? "not-allowed" : "pointer",
+              fontSize: "16px",
+              fontWeight: "bold",
+            }}
+          >
+            {isProcessing ? "Processing..." : "Upload to Database"}
+          </button>
+        )}
+      </Card>
     </div>
   );
 };
+
+// Helper Card Component for styling
+const Card = ({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) => (
+  <div style={{ background: "#fff", borderRadius: "12px", ...style }}>
+    {children}
+  </div>
+);
 
 export default MultiFieldCSVProcessor;

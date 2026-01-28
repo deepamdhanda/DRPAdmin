@@ -12,6 +12,8 @@ const menuItems = [
   { name: "Incoming Remittance", icon: "💸", path: "/incomingRemittance" },
   { name: "Invoice", icon: "💸", path: "/invoice" },
   { name: "Edit Pool", path: "/kyc-verification", icon: "🎱" },
+  { name: "Weight Discrepancy", path: "/weight-discrepancy", icon: "𐄷" },
+  { name: "Coupon", path: "/coupon", icon: "🎄" },
   {
     name: "Marketing",
     icon: "",

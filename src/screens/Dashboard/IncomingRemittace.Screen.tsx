@@ -28,6 +28,7 @@ export interface IncomingRemittance {
   netAmountReceived: number;
   receivedDate: string;
   orders: {
+    _id: string;
     order_id: string;
     channel_order_id: string;
     store_order_id: string;
@@ -45,33 +46,70 @@ const IncomingRemittances: React.FC = () => {
   const [incoming_remittances, setIncomingRemittances] = useState<
     IncomingRemittance[]
   >([]);
-  const [loading, setLoading] = useState(true); // Added loading state
+  const [loading, setLoading] = useState(true);
   const [selectedRemittance, setSelectedRemittance] =
     useState<IncomingRemittance | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  // --- Handlers ---
+
+  // Opens modal in "Create Mode"
+  const handleCreateClick = () => {
+    setSelectedRemittance(null); // Ensure no data is selected
+    setShowModal(true);
+  };
+
+  // Opens modal in "Edit Mode"
   const handleEditClick = (remittance: IncomingRemittance) => {
-    setSelectedRemittance(remittance);
+    setSelectedRemittance(remittance); // Pre-fill data
     setShowModal(true);
   };
 
   const handleModalClose = () => {
     setShowModal(false);
-    setSelectedRemittance(null);
+    setTimeout(() => setSelectedRemittance(null), 200); // Small delay to prevent UI flicker
   };
 
   const handleModalSubmit = async (formData: any) => {
-    const transfers = { transfers: formData };
-    console.log(transfers);
     if (!formData) return;
 
-    if (selectedRemittance?._id) {
-      await updateIncomingRemittance(selectedRemittance._id, transfers);
-      fetchInitialData();
-    }
+    try {
+      setLoading(true);
 
-    setSelectedRemittance(null);
-    handleModalClose();
+      // ==========================================
+      // CASE 1: EDIT / UPDATE EXISTING REMITTANCE
+      // ==========================================
+      if (selectedRemittance?._id) {
+        // Prepare the payload for update
+        // Note: Adjust this structure based on what your API expects for an update
+        const payload = { ...formData };
+
+        // Example: If you are specifically updating transfers as per your original code:
+        // const payload = { transfers: formData };
+
+        await updateIncomingRemittance(selectedRemittance._id, payload);
+        console.log("Remittance updated successfully");
+      }
+
+      // ==========================================
+      // CASE 2: CREATE NEW REMITTANCE
+      // ==========================================
+      else {
+        // TODO: Call your Create API here
+        console.log("Creating new remittance with data:", formData);
+
+        // const response = await createIncomingRemittance(formData);
+      }
+
+      // Refresh data and close modal
+      await fetchInitialData();
+      handleModalClose();
+    } catch (error) {
+      console.error("Error saving remittance:", error);
+      // Optional: Add toast notification for error here
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -86,12 +124,13 @@ const IncomingRemittances: React.FC = () => {
       ]);
       setIncomingRemittances(incoming_remittancesData);
     } catch (error) {
-      console.error("Error loading incoming_remittances or users", error);
+      console.error("Error loading incoming_remittances", error);
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Columns Configuration ---
   const columns = [
     {
       name: "Reference ID",
@@ -166,7 +205,11 @@ const IncomingRemittances: React.FC = () => {
     {
       name: "Action",
       cell: (row: IncomingRemittance) => (
-        <Button size="sm" onClick={() => handleEditClick(row)}>
+        <Button
+          size="sm"
+          variant="outline-primary"
+          onClick={() => handleEditClick(row)}
+        >
           Edit
         </Button>
       ),
@@ -237,41 +280,24 @@ const IncomingRemittances: React.FC = () => {
         style={{
           padding: "15px",
           backgroundColor: "#f0f0f0",
-          borderLeft: "4px solid #F5891E", // your brand orange
+          borderLeft: "4px solid #F5891E",
           margin: "10px 0",
           fontSize: "0.9rem",
           color: "#333",
         }}
       >
         <h6>Orders:</h6>
-        <DataTable
-          // title="Your COD Remittances"
-          data={row.orders}
-          columns={orderColumns as any}
-          // highlightOnHover
-          // pagination
-          // paginationRowsPerPageOptions={[10, 20, 50, 100, 200, 500, 1000]}
-          responsive
-          // striped
-          // persistTableHead
-          // expandableRows
-          // expandableRowsComponent={ExpandedComponent}
-        />
-        {/* <ul>
-          {row.orders.map((order: any) => (
-            <li key={order._id}>
-              Order ID: {order.orderId}, Amount: ₹{order.amount}, Courier: {order.courierPartner}
-            </li>
-          ))}
-        </ul> */}
+        <DataTable data={row.orders} columns={orderColumns as any} responsive />
       </div>
     );
   };
+
   return (
     <div className="container mt-4 ms-2 me-2">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4>COD Remittances</h4>
-        <Button size={"sm"} onClick={() => setShowModal(true)}>
+        {/* Updated Button to use handleCreateClick */}
+        <Button size={"sm"} onClick={handleCreateClick}>
           Save Remittance
         </Button>
       </div>
@@ -296,11 +322,12 @@ const IncomingRemittances: React.FC = () => {
         />
       )}
 
+      {/* The Modal handles the logic based on the 'remittance' prop */}
       <EditIncomingRemittanceModal
         show={showModal}
         onHide={handleModalClose}
         onSubmit={handleModalSubmit}
-        remittance={selectedRemittance}
+        remittance={selectedRemittance} // Null for create, Object for edit
       />
     </div>
   );

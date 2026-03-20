@@ -14,6 +14,7 @@ import { whatsappRoutes } from "./Whatsapp/whatsapp.Router.tsx";
 import KycVerification from "./kyc-verification.screen.tsx";
 import WeightDiscrepancy from "./WeightDiscrepancy.tsx";
 import CouponManager from "./Coupon.Screen.tsx";
+import Dispute from "./WeightDispute.Screen.tsx";
 
 export const dashboardRoutes = [
   {
@@ -55,6 +56,10 @@ export const dashboardRoutes = [
   {
     path: "coupon",
     element: <CouponManager />,
+  },
+  {
+    path: "weight-dispute",
+    element: <Dispute />,
   },
   {
     path: "marketing",

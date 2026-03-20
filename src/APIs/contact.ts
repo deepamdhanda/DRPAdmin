@@ -3,9 +3,11 @@ import { appAxios } from "../axios/appAxios";
 import { contacts_url } from "../axios/urls";
 import type { Contact } from "../screens/Dashboard/Marketing/Contact.Screen";
 
-export const getAllContacts = async () => {
+export const getAllContacts = async ({ isDeleted }: { isDeleted: boolean }) => {
   try {
-    const response = await appAxios.get(contacts_url);
+    const response = await appAxios.get(
+      `${contacts_url}?isDeleted=${isDeleted}`
+    );
     return response.data as Contact[];
   } catch (error: any) {
     toast.error("Failed to fetch Contact s.");

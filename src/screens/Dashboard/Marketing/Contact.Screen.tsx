@@ -17,12 +17,15 @@ import {
   createContact,
   updateContact,
   addRemarkToContact,
+  mergeDuplicates,
+  refreshStatus,
 } from "../../../APIs/contact";
 import { getAllContactLists } from "../../../APIs/contactList";
 import { createAmazonS3 } from "../../../APIs/amazonS3";
 import type { Template } from "../Whatsapp/Chat.Whatsapp.Screen";
 import { getAllTemplates } from "../../../APIs/whatsapp/template";
 import { createChat } from "../../../APIs/whatsapp/chat";
+import { merge, set } from "lodash";
 
 // --- Interfaces ---
 export interface Contact {
@@ -41,19 +44,37 @@ export interface Contact {
   };
   lead_type?: "cold" | "warm" | "hot";
   lead_status?:
-    | "new"
-    | "contacted"
-    | "qualified"
-    | "lost"
-    | "converted"
-    | "follow_up"
-    | "negotiation"
-    | "on_hold";
+  "Fresh"
+  | "Message Sent"
+  | "Call Booked"
+  | "Replied Active"
+  | "Replied Inactive"
+  | "Qualified"
+  | "Follow Up"
+  | "Demo Booked"
+  | "Demo Done"
+  | "Unverified"
+  | "KYC"
+  | "Warehouse"
+  | "Channel"
+  | "Wallet"
+  | "Test"
+  | "Deleted"
+  | "Orders Shipped"
+  | "Irrelevent"
+  | "Rejected Us"
+  | "Not Intrested"
+  | "Very Early Stage"
   status?: "active" | "inactive" | "suspended";
   next_followup_date?: string;
   isDeleted?: boolean;
   remarks?: Remark[];
   createdAt?: string;
+  registered_user_id?: string;
+  user_verified?: boolean;
+  pools?: Array<{ name: string; wallet_balance: number }>;
+  warehouses?: string[];
+  channels?: string[];
 }
 
 interface Remark {
@@ -62,6 +83,7 @@ interface Remark {
   fileLink?: string;
   createdAt?: Date | string;
 }
+const lead_status_options = ["Fresh", "Message Sent", "Call Booked", "Replied Active", "Replied Inactive", "Qualified", "Follow Up", "Demo Booked", "Demo Done", "Unverified", "KYC", "Warehouse", "Channel", "Wallet", "Test", "Deleted", "Orders Shipped", "Irrelevent", "Rejected Us", "Not Intrested", "Very Early Stage"];
 
 interface ContactForm {
   name: string;
@@ -84,7 +106,7 @@ const getLeadColor = (lead: string | undefined): string => {
 
 const getLeadStatusColor = (status: string | undefined): string => {
   const colors = {
-    new: "#3b82f6",
+    fresh: "#3b82f6",
     contacted: "#fcd34d",
     qualified: "#8b5cf6",
     converted: "#16a34a",
@@ -114,7 +136,7 @@ const ContactScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [remarkLoading, setRemarkLoading] = useState(false);
   const [refetch, setRefetch] = useState(false);
-  const [activeTab, setActiveTab] = useState<"active" | "deleted">("active");
+  const [activeTab, setActiveTab] = useState<"Fresh" | "Unverified" | "KYC" | "Warehouse" | "Channel" | "Wallet" | "Test" | "Deleted" | "All">("Fresh");
 
   // Filters
   const [searchText, setSearchText] = useState("");
@@ -141,7 +163,7 @@ const ContactScreen: React.FC = () => {
     lead_utm: {},
     status: "active",
     lead_type: "cold",
-    lead_status: "new",
+    lead_status: "fresh",
     next_followup_date: "",
   });
 
@@ -153,16 +175,18 @@ const ContactScreen: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
       // Assuming backend accepts { isDeleted: true/false } as query params
-      const isDeletedQuery = activeTab === "deleted";
       const [contactsRes, contactListRes] = await Promise.all([
-        getAllContacts({ isDeleted: isDeletedQuery }),
+        getAllContacts({ tab: activeTab }), // Pass the active tab to backend for filtering
         getAllContactLists(),
       ]);
       setContacts(contactsRes);
       setContactLists(contactListRes);
     } catch (err) {
       toast.error("Failed to load data");
+    } finally {
+      setLoading(false);
     }
   }, [activeTab]);
 
@@ -202,7 +226,7 @@ const ContactScreen: React.FC = () => {
         lead_utm: {},
         status: "active",
         lead_type: "cold",
-        lead_status: "new",
+        lead_status: "fresh",
         next_followup_date: "",
       });
       setEditingId(null);
@@ -368,17 +392,33 @@ const ContactScreen: React.FC = () => {
           style={{ padding: "10px 0", cursor: "pointer" }}
           onClick={() => openEditModal(row)}
         >
-          <div
-            style={{
-              fontWeight: "600",
-              marginBottom: "4px",
-              fontSize: "14px",
-              color: "blue",
-              textDecoration: "underline",
-            }}
-          >
-            {row.name || "—"}
+          <div className="d-flex align-items-center gap-2">
+           
+            <div style={{ fontSize: "16px", textAlign: "center" }}>
+              {row.user_verified ? (
+                <span style={{ color: "#22c55e" }} title="Verified">
+                  ✓
+                </span>
+              ) : (
+                <span style={{ color: "#ef4444" }} title="Not Verified">
+                  ✗
+                </span>
+              )}
+            </div>
+             <div
+              style={{
+                fontWeight: "600",
+                marginBottom: "4px",
+                fontSize: "14px",
+                color: "blue",
+                textDecoration: "underline",
+              }}
+            >
+              {row.name || "—"}
+            </div>
+
           </div>
+
           <div style={{ fontSize: "12px", color: "#555" }}>
             📧 {row.email || "-"}
           </div>
@@ -411,7 +451,7 @@ const ContactScreen: React.FC = () => {
               {row.lead_status?.replace("_", " ") || "N/A"}
             </span>
           </div>
-        </div>
+        </div >
       ),
       sortable: true,
       width: "220px",
@@ -508,6 +548,64 @@ const ContactScreen: React.FC = () => {
       width: "150px",
     },
     {
+      name: "Pools",
+      cell: (row: Contact) => (
+        <div style={{ fontSize: "11px" }}>
+          {row.pools && row.pools.length > 0 ? (
+            row.pools.map((pool, idx) => (
+              <div key={idx} className="mb-1">
+                <strong>{pool.name}</strong>
+                <div style={{ color: "#666", fontSize: "10px" }}>
+                  Balance: ₹{pool.wallet_balance?.toFixed(2) || "0"}
+                </div>
+              </div>
+            ))
+          ) : (
+            <span className="text-muted">—</span>
+          )}
+        </div>
+      ),
+      width: "140px",
+    },
+    {
+      name: "Warehouses",
+      cell: (row: Contact) => (
+        <div style={{ fontSize: "11px" }}>
+          {row.warehouses && row.warehouses.length > 0 ? (
+            <div>
+              {row.warehouses.map((warehouse, idx) => (
+                <div key={idx} style={{ marginBottom: "3px", fontWeight: "500" }}>
+                  📦 {warehouse}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-muted">—</span>
+          )}
+        </div>
+      ),
+      width: "120px",
+    },
+    {
+      name: "Channels",
+      cell: (row: Contact) => (
+        <div style={{ fontSize: "11px" }}>
+          {row.channels && row.channels.length > 0 ? (
+            <div>
+              {row.channels.map((channel, idx) => (
+                <div key={idx} style={{ marginBottom: "3px", fontWeight: "500" }}>
+                  🔗 {channel}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-muted">—</span>
+          )}
+        </div>
+      ),
+      width: "120px",
+    },
+    {
       name: "Actions",
       cell: (row: Contact) => (
         <div className="d-flex gap-2">
@@ -522,14 +620,14 @@ const ContactScreen: React.FC = () => {
           <Button
             size="sm"
             variant={
-              activeTab === "active" ? "outline-danger" : "outline-success"
+              activeTab === "Fresh" ? "outline-danger" : "outline-success"
             }
             onClick={() =>
-              handleToggleDelete(row._id!, activeTab === "deleted")
+              handleToggleDelete(row._id!, activeTab === "Deleted")
             }
             style={{ fontSize: "11px" }}
           >
-            {activeTab === "active" ? "Delete" : "Recover"}
+            {activeTab === "Deleted" ? "Recover" : "Delete"}
           </Button>
         </div>
       ),
@@ -569,39 +667,143 @@ const ContactScreen: React.FC = () => {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
         <h3>Contact Database</h3>
-        <Button
-          onClick={() => openEditModal()}
-          variant="primary"
-          className="text-nowrap"
-        >
-          + Add New Contact
-        </Button>
+        <div>
+          <Button
+            onClick={() => openEditModal()}
+            variant="primary"
+            size="sm"
+            className="text-nowrap me-2"
+          >
+            + Add New Contact
+          </Button>
+          <Button
+            onClick={async () => {
+              const res = await mergeDuplicates()
+              if (res) {
+                setRefetch(!refetch);
+              }
+            }}
+            variant="success"
+            size="sm"
+            className="text-nowrap me-2"
+          >
+            Merge Duplicates
+          </Button>
+          <Button
+            onClick={async () => {
+              const res = await refreshStatus()
+              if (res) {
+                setRefetch(!refetch);
+              }
+            }}
+            variant="warning"
+            size="sm"
+            className="text-nowrap me-2"
+          >
+            Refresh Status
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
       <ul className="nav nav-tabs mb-3 border-bottom-0">
         <li className="nav-item">
           <button
-            className={`nav-link ${
-              activeTab === "active"
-                ? "active border-bottom-0 fw-bold"
-                : "text-muted"
-            }`}
-            onClick={() => setActiveTab("active")}
+            className={`nav-link ${activeTab === "Fresh"
+              ? "active border-bottom-0 fw-bold"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("Fresh")}
           >
-            Active Contacts
+            Fresh Contacts
           </button>
         </li>
         <li className="nav-item">
           <button
-            className={`nav-link ${
-              activeTab === "deleted"
-                ? "active border-bottom-0 fw-bold text-danger"
-                : "text-muted"
-            }`}
-            onClick={() => setActiveTab("deleted")}
+            className={`nav-link ${activeTab === "Unverified"
+              ? "active border-bottom-0 fw-bold text-danger"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("Unverified")}
           >
-            Deleted Contacts
+            Step 0 - Unverified Users
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "KYC"
+              ? "active border-bottom-0 fw-bold text-danger"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("KYC")}
+          >
+            Step 1 - KYC Users
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "Warehouse"
+              ? "active border-bottom-0 fw-bold"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("Warehouse")}
+          >
+            Step 2 - Warehouse Users
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "Channel"
+              ? "active border-bottom-0 fw-bold text-danger"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("Channel")}
+          >
+            Step 3 - Channel Account Users
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "Wallet"
+              ? "active border-bottom-0 fw-bold"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("Wallet")}
+          >
+            Step 4 - Wallet Recharge Users
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "Test"
+              ? "active border-bottom-0 fw-bold text-danger"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("Test")}
+          >
+            Test Users
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "All"
+              ? "active border-bottom-0 fw-bold text-danger"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("All")}
+          >
+            All Users
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "Deleted"
+              ? "active border-bottom-0 fw-bold text-danger"
+              : "text-muted"
+              }`}
+            onClick={() => setActiveTab("Deleted")}
+          >
+            Deleted Users
           </button>
         </li>
       </ul>
@@ -650,14 +852,11 @@ const ContactScreen: React.FC = () => {
                 style={{ width: "150px" }}
               >
                 <option value="">All Statuses</option>
-                <option value="new">New</option>
-                <option value="contacted">Contacted</option>
-                <option value="follow_up">Follow Up</option>
-                <option value="negotiation">Negotiation</option>
-                <option value="qualified">Qualified</option>
-                <option value="on_hold">On Hold</option>
-                <option value="converted">Converted</option>
-                <option value="lost">Lost</option>
+                {lead_status_options.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </Form.Select>
             </div>
 
@@ -711,10 +910,12 @@ const ContactScreen: React.FC = () => {
       <DataTable
         columns={columns}
         data={filteredContacts}
+        paginationPerPage={100}
+        progressPending={loading}
         pagination
         highlightOnHover
         responsive
-        paginationRowsPerPageOptions={[10, 50, 100, 500]}
+        paginationRowsPerPageOptions={[50, 100, 500, 1000, filteredContacts.length]}
       />
 
       {/* --- Edit/Create Contact Modal --- */}
@@ -834,14 +1035,11 @@ const ContactScreen: React.FC = () => {
                   handleQuickUpdate("lead_status", e.target.value)
                 }
               >
-                <option value="new">New</option>
-                <option value="contacted">Contacted</option>
-                <option value="follow_up">Follow Up Required</option>
-                <option value="negotiation">In Negotiation</option>
-                <option value="qualified">Qualified</option>
-                <option value="on_hold">On Hold</option>
-                <option value="converted">Converted</option>
-                <option value="lost">Lost</option>
+                {lead_status_options.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </Form.Select>
             </div>
             <div className="flex-grow-1">
@@ -921,7 +1119,7 @@ const ContactScreen: React.FC = () => {
             }}
           >
             {!selectedContact?.remarks ||
-            selectedContact.remarks.length === 0 ? (
+              selectedContact.remarks.length === 0 ? (
               <div className="text-center py-4 text-muted">
                 No history found.
               </div>

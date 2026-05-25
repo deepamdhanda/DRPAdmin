@@ -3,10 +3,10 @@ import { appAxios } from "../axios/appAxios";
 import { contacts_url } from "../axios/urls";
 import type { Contact } from "../screens/Dashboard/Marketing/Contact.Screen";
 
-export const getAllContacts = async ({ isDeleted }: { isDeleted: boolean }) => {
+export const getAllContacts = async ({ tab }: { tab: string }) => {
   try {
     const response = await appAxios.get(
-      `${contacts_url}?isDeleted=${isDeleted}`
+      `${contacts_url}?tab=${tab}`
     );
     return response.data as Contact[];
   } catch (error: any) {
@@ -75,6 +75,28 @@ export const addRemarkToContact = async (
     await appAxios.post(`${contacts_url}/${id}/remarks`, data);
   } catch (error) {
     toast.error("Failed to add remark");
+    throw error;
+  }
+};
+
+
+
+export const mergeDuplicates = async () => {
+  try {
+    const response = await appAxios.get(contacts_url + "/merge");
+    return response.data as any[];
+  } catch (error: any) {
+    toast.error("Failed to fetch Contact s.");
+    throw error;
+  }
+};
+
+export const refreshStatus = async () => {
+  try {
+    const response = await appAxios.get(contacts_url + "/refresh");
+    return response.data as any[];
+  } catch (error: any) {
+    toast.error("Failed to fetch Contact s.");
     throw error;
   }
 };
